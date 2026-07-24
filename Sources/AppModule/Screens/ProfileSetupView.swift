@@ -1,0 +1,117 @@
+import SwiftUI
+
+/// First-run onboarding: pick a role, base airport, name, and how that name
+/// should appear to strangers later.
+struct ProfileSetupView: View {
+    var onDone: (UserProfile) -> Void
+
+    @State private var role = Roles.all[2].code // CA
+    @State private var base = Bases.all[0]
+    @State private var fullName = ""
+    @State private var displayMode: DisplayMode = .initials
+    @State private var nickname = ""
+
+    private var trimmedFullName: String { fullName.trimmingCharacters(in: .whitespaces) }
+    private var trimmedNickname: String { nickname.trimmingCharacters(in: .whitespaces) }
+    private var initials: String { computeInitials(fullName) }
+
+    private var previewName: String {
+        displayMode == .nickname
+            ? (trimmedNickname.isEmpty ? "(ニックネーム未入力)" : trimmedNickname)
+            : (initials.isEmpty ? "(お名前未入力)" : initials)
+    }
+
+    private var canSubmit: Bool {
+        displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty
+    }
+
+    var body: some View {
+        BoardScreenContainer {
+            VStack(spacing: 4) {
+                Text("CREW BOARD").splitFlap(28, weight: .bold).foregroundStyle(Theme.amber)
+                Text("航空従事者限定・飲み会マッチング")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.muted)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 24)
+
+            BoardCard {
+                Text("職種").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.bottom, 6)
+                FlowLayout(spacing: 8) {
+                    ForEach(Roles.all) { r in
+                        Button(r.label) { role = r.code }
+                            .font(.system(size: 13))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(role == r.code ? Theme.amber : Theme.text)
+                            .background(role == r.code ? Theme.amberBackground : Theme.field)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                    .stroke(role == r.code ? Theme.amber : Theme.fieldBorder)
+                            )
+                    }
+                }
+
+                Text("拠点空港").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
+                AirportAutocompleteField(code: $base)
+
+                Text("お名前").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
+                TextField("例: 田中 陽介", text: $fullName)
+                    .font(.system(size: 14))
+                    .padding(10)
+                    .background(Theme.field)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+                Text("知り合いにはこのお名前が表示されます。新しい人と探す機能ではイニシャル生成にのみ使用され、直接は表示されません。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .padding(.top, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("新しい人と探す機能での表示名").font(.system(size: 12)).foregroundStyle(Theme.muted)
+                    Picker("表示名", selection: $displayMode) {
+                        Text("イニシャル").tag(DisplayMode.initials)
+                        Text("ニックネーム").tag(DisplayMode.nickname)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if displayMode == .nickname {
+                        TextField("例: そらまめ", text: $nickname)
+                            .font(.system(size: 13))
+                            .padding(8)
+                            .background(Theme.card)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+                    }
+
+                    HStack(spacing: 0) {
+                        Text("プレビュー: ").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                        Text(previewName).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.amber)
+                    }
+                }
+                .padding(12)
+                .background(Theme.field)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.fieldBorder))
+                .padding(.top, 18)
+
+                Button("プロフィールを作成して始める") {
+                    let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname)
+                    onDone(profile)
+                }
+                .buttonStyle(BoardButtonStyle(isDisabled: !canSubmit))
+                .disabled(!canSubmit)
+                .padding(.top, 20)
+
+                Text("※知り合いマッチングは今すぐ利用できます。「新しい人と探す」機能を使う際に会社メールでの本人確認が必要になります。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .padding(.top, 10)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}

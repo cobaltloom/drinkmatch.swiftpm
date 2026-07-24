@@ -4,7 +4,7 @@ import SwiftUI
 struct DrinkMatchApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
     }
 }
