@@ -46,7 +46,7 @@ struct GroupOrganizerView: View {
                         .padding(.bottom, 6)
                     Picker("", selection: $slotDay) {
                         ForEach(slotOptions) { entry in
-                            Text("\(fmtDate(entry.day)) — \(airportLabel(entry.location))").tag(entry.day as Int?)
+                            Text("\(dateLabel(entry.day)) — \(airportLabel(entry.location))").tag(entry.day as Int?)
                         }
                     }
                     .pickerStyle(.menu)

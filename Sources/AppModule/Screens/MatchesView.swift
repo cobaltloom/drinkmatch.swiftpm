@@ -82,7 +82,7 @@ struct MatchesView: View {
             case .group(let id):
                 if let group = store.groups.first(where: { $0.id == id }) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("👥 \(fmtDate(group.day)) \(airportLabel(group.location))")
+                        Text("👥 \(dateLabel(group.day)) \(airportLabel(group.location))")
                             .font(.system(size: 12, weight: .bold))
                         Text("\(group.acceptedCount)/\(group.members.count) 承諾")
                             .font(.system(size: 11))

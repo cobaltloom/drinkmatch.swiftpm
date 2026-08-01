@@ -46,6 +46,18 @@ struct Person: Identifiable, Hashable {
     }
 }
 
+/// One overlapping stay between the signed-in user and another person: same
+/// day + same stay airport, on both sides. Pre-computed server-side via the
+/// backend's `get_match_overlap` RPC (see SupabaseRepository.fetchOverlap) —
+/// the client never sees another user's raw schedule.
+struct StayOverlap: Identifiable, Hashable {
+    var day: Int
+    var location: String
+    var myFrom: String
+    var otherFrom: String
+    var id: Int { day }
+}
+
 enum OfferStatus: String, Hashable, Codable {
     case pending
     case accepted
@@ -153,7 +165,7 @@ struct UserProfile {
         case .nickname:
             return nickname.trimmingCharacters(in: .whitespacesAndNewlines)
         case .initials:
-            return computeInitials(fullName)
+            return initials(from: fullName)
         }
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 /// boundary using the helpers below.
 
 /// The client's schedule UI works in day-of-month integers scoped to
-/// `BoardCalendar.year`/`BoardCalendar.month` (see Data/Matching.swift);
+/// `BoardCalendar.year`/`BoardCalendar.month` (see Data/CalendarFormatting.swift);
 /// the backend stores a full SQL `date`. These convert between the two.
 func postgresDateString(forDay day: Int) -> String {
     String(format: "%04d-%02d-%02d", BoardCalendar.year, BoardCalendar.month, day)

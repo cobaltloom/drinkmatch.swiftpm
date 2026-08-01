@@ -24,7 +24,7 @@ enum BoardCalendar {
     static let weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"]
 }
 
-func fmtDate(_ day: Int) -> String {
+func dateLabel(_ day: Int) -> String {
     "\(BoardCalendar.month)/\(day)"
 }
 
@@ -36,7 +36,7 @@ func airportLabel(_ code: String) -> String {
     "\(code) (\(airportName(code)))"
 }
 
-func computeInitials(_ fullName: String) -> String {
+func initials(from fullName: String) -> String {
     let parts = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
         .split(separator: " ")
         .map(String.init)
@@ -45,19 +45,10 @@ func computeInitials(_ fullName: String) -> String {
     return parts.map { String($0.prefix(1)).uppercased() }.joined(separator: ".") + "."
 }
 
-/// One overlapping stay: same day + same stay airport, on both sides.
-struct StayOverlap: Identifiable, Hashable {
-    var day: Int
-    var location: String
-    var myFrom: String
-    var otherFrom: String
-    var id: Int { day }
-}
-
 /// The later (i.e. more restrictive / safer) of two "available from" times,
 /// compared lexicographically since both are zero-padded "HH:mm" strings.
-func laterTime(_ a: String, _ b: String) -> String {
-    a > b ? a : b
+func laterTime(_ first: String, _ second: String) -> String {
+    first > second ? first : second
 }
 
 // MARK: - "HH:mm" <-> Date, for binding a DatePicker to a stored time string.

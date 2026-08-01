@@ -13,12 +13,12 @@ struct ProfileSetupView: View {
 
     private var trimmedFullName: String { fullName.trimmingCharacters(in: .whitespaces) }
     private var trimmedNickname: String { nickname.trimmingCharacters(in: .whitespaces) }
-    private var initials: String { computeInitials(fullName) }
+    private var previewInitials: String { initials(from: fullName) }
 
     private var previewName: String {
         displayMode == .nickname
             ? (trimmedNickname.isEmpty ? "(ニックネーム未入力)" : trimmedNickname)
-            : (initials.isEmpty ? "(お名前未入力)" : initials)
+            : (previewInitials.isEmpty ? "(お名前未入力)" : previewInitials)
     }
 
     private var canSubmit: Bool {
@@ -39,17 +39,17 @@ struct ProfileSetupView: View {
             BoardCard {
                 Text("職種").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.bottom, 6)
                 FlowLayout(spacing: 8) {
-                    ForEach(Roles.all) { r in
-                        Button(r.label) { role = r.code }
+                    ForEach(Roles.all) { roleOption in
+                        Button(roleOption.label) { role = roleOption.code }
                             .font(.system(size: 13))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .foregroundStyle(role == r.code ? Theme.amber : Theme.text)
-                            .background(role == r.code ? Theme.amberBackground : Theme.field)
+                            .foregroundStyle(role == roleOption.code ? Theme.amber : Theme.text)
+                            .background(role == roleOption.code ? Theme.amberBackground : Theme.field)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .stroke(role == r.code ? Theme.amber : Theme.fieldBorder)
+                                    .stroke(role == roleOption.code ? Theme.amber : Theme.fieldBorder)
                             )
                     }
                 }

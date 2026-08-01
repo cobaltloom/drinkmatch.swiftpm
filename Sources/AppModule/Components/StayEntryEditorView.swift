@@ -17,7 +17,7 @@ struct StayEntryEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(fmtDate(entry.day))
+                Text(dateLabel(entry.day))
                     .splitFlap(12, weight: .semibold)
                     .foregroundStyle(Theme.amber)
                     .frame(width: 44, alignment: .leading)

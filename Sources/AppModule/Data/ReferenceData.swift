@@ -1,5 +1,10 @@
 import Foundation
 
+/// Static lookup data and app-wide constants — roles, base airports, the
+/// stay-airport autocomplete list, and business-rule constants that mirror
+/// the backend. None of this is sample/placeholder data; it's real reference
+/// data the app ships with.
+
 /// Per-user referral code issuance cap — must match drinkmatch-backend's
 /// `app_settings.referral_code_cap` (enforced authoritatively server-side
 /// in `issue_referral_code()`; this constant only drives when the client

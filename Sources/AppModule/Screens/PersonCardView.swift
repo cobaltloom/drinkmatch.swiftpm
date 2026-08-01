@@ -71,16 +71,16 @@ struct PersonCardView: View {
 
             if !overlap.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(overlap) { o in
+                    ForEach(overlap) { overlapDay in
                         HStack {
                             HStack(alignment: .firstTextBaseline, spacing: 0) {
-                                Text(fmtDate(o.day)).font(.system(size: 12)).foregroundStyle(Theme.amber)
-                                Text(" \(airportLabel(o.location)) — \(laterTime(o.myFrom, o.otherFrom))以降どちらも動けます")
+                                Text(dateLabel(overlapDay.day)).font(.system(size: 12)).foregroundStyle(Theme.amber)
+                                Text(" \(airportLabel(overlapDay.location)) — \(laterTime(overlapDay.myFrom, overlapDay.otherFrom))以降どちらも動けます")
                                     .font(.system(size: 12)).foregroundStyle(Theme.text)
                             }
                             Spacer()
                             if offerStatus == nil {
-                                Button("🍻 誘う") { onOffer(person, o, autoAccept) }
+                                Button("🍻 誘う") { onOffer(person, overlapDay, autoAccept) }
                                     .buttonStyle(BoardOutlineButtonStyle())
                             }
                         }
@@ -123,25 +123,4 @@ struct PersonCardView: View {
             )
         }
     }
-}
-
-/// Minimal checkbox-style toggle so labels read left-to-right like a form
-/// checkbox instead of a trailing iOS switch.
-struct CheckboxToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button {
-            configuration.isOn.toggle()
-        } label: {
-            HStack(alignment: .top, spacing: 6) {
-                Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(configuration.isOn ? Theme.amber : Theme.faint)
-                configuration.label
-            }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-extension ToggleStyle where Self == CheckboxToggleStyle {
-    static var checkbox: CheckboxToggleStyle { CheckboxToggleStyle() }
 }

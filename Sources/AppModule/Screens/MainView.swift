@@ -23,7 +23,7 @@ struct MainView: View {
     private var scheduleSummary: String {
         store.mySchedule.isEmpty
             ? "未設定"
-            : store.mySchedule.map { "\(fmtDate($0.day))\(airportLabel($0.location))" }.joined(separator: ", ")
+            : store.mySchedule.map { "\(dateLabel($0.day))\(airportLabel($0.location))" }.joined(separator: ", ")
     }
 
     var body: some View {
