@@ -94,7 +94,7 @@ struct StayEntryEditorView: View {
         .overlay(Divider().background(Theme.divider), alignment: .bottom)
     }
 
-    private func toggleHidden(_ friendID: Int) {
+    private func toggleHidden(_ friendID: UUID) {
         if let index = entry.hiddenFrom.firstIndex(of: friendID) {
             entry.hiddenFrom.remove(at: index)
         } else {

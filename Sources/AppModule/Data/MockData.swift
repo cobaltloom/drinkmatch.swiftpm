@@ -1,31 +1,11 @@
 import Foundation
 
-/// Company / group-company email domains accepted for identity verification.
-///
-/// NOTE: some domains below were confirmed live during prototype research,
-/// others were not — see the handoff doc (§2, §9). All entries must be
-/// re-verified before this list is used in production.
-enum VerifiedDomains {
-    static let all: Set<String> = [
-        // 大手
-        "ana.co.jp", "jal.co.jp",
-        // LCC
-        "jetstar.com", "flypeach.com", "springjapan.co.jp", "zipair.net",
-        // 地域航空会社
-        "skymark.co.jp", "airdo.jp", "solaseedair.jp", "starflyer.jp",
-        "amx.co.jp", // 天草エアライン
-        "jac.co.jp", // 日本エアコミューター
-        "rac-okinawa.com", // 琉球エアーコミューター
-        "hac-air.co.jp", // 北海道エアシステム
-        // 貨物
-        "nca.aero", // 日本貨物航空
-        // グループ会社(整備・グランドハンドリング等)
-        "anawings.co.jp", // ANAウイングス
-        "ana-g.com", // ANAグループの空港サービス各社の共通ドメイン
-        "jgsgroup.co.jp", // JALグランドサービス
-        "jalec.co.jp", // JALエンジニアリング
-    ]
-}
+/// Per-user referral code issuance cap — must match drinkmatch-backend's
+/// `app_settings.referral_code_cap` (enforced authoritatively server-side
+/// in `issue_referral_code()`; this constant only drives when the client
+/// proactively disables the "発行" button instead of making a call that's
+/// certain to be rejected).
+let maxReferralCodesPerUser = 3
 
 enum Roles {
     static let all: [Role] = [
@@ -151,96 +131,5 @@ enum StayAirports {
         Airport(code: "AMS", name: "アムステルダム"),
         Airport(code: "FCO", name: "ローマ・フィウミチーノ"),
         Airport(code: "MUC", name: "ミュンヘン"),
-    ]
-}
-
-/// Demo pool of unknown-to-you crew members shown in the "new match" flow.
-enum SampleStrangers {
-    static let all: [Person] = [
-        Person(id: 101, name: "T.S.", fullName: nil, role: "CA", airline: "ANA", base: "HND", years: 4,
-               note: "同期と2人で参加予定",
-               stays: [
-                StayEntry(day: 6, location: "OKA", from: "19:00"),
-                StayEntry(day: 7, location: "OKA", from: "18:00"),
-                StayEntry(day: 18, location: "CTS", from: "20:00"),
-                StayEntry(day: 25, location: "FUK", from: "19:30"),
-               ]),
-        Person(id: 102, name: "K.M.", fullName: nil, role: "F/O", airline: "JAL", base: "HND", years: 7,
-               note: "ゆっくり飲める方希望",
-               stays: [
-                StayEntry(day: 6, location: "OKA", from: "20:30"),
-                StayEntry(day: 13, location: "KIX", from: "19:00"),
-                StayEntry(day: 20, location: "FUK", from: "18:30"),
-               ]),
-        Person(id: 103, name: "R.O.", fullName: nil, role: "CA", airline: "Jetstar", base: "NRT", years: 2,
-               note: "3人グループで参加",
-               stays: [
-                StayEntry(day: 8, location: "CTS", from: "18:00"),
-                StayEntry(day: 15, location: "OKA", from: "19:00"),
-                StayEntry(day: 22, location: "FUK", from: "20:00"),
-               ]),
-        Person(id: 104, name: "Y.H.", fullName: nil, role: "CPT", airline: "ANA", base: "HND", years: 15,
-               note: "業界話できる方歓迎",
-               stays: [
-                StayEntry(day: 7, location: "OKA", from: "21:00"),
-                StayEntry(day: 17, location: "KIX", from: "19:30"),
-                StayEntry(day: 30, location: "FUK", from: "18:00"),
-               ]),
-        Person(id: 105, name: "N.I.", fullName: nil, role: "CA", airline: "SKY", base: "KIX", years: 3,
-               note: "大阪ベースの方と繋がりたい",
-               stays: [
-                StayEntry(day: 13, location: "KIX", from: "19:00"),
-                StayEntry(day: 19, location: "FUK", from: "18:30"),
-                StayEntry(day: 28, location: "OKA", from: "20:00"),
-               ]),
-    ]
-}
-
-/// Invite codes used to add someone as a known acquaintance ("friend").
-enum InviteCodes {
-    static let all: [String: Person] = [
-        "PILOT2024": Person(id: 201, name: "M.F.", fullName: "藤田 誠", role: "F/O", airline: "ANA", base: "HND", years: 5,
-                             note: "元同期です、久々に集合しましょう",
-                             stays: [
-                                StayEntry(day: 6, location: "OKA", from: "19:30"),
-                                StayEntry(day: 19, location: "FUK", from: "18:00"),
-                                StayEntry(day: 26, location: "KIX", from: "20:00"),
-                             ]),
-        "CREW-AYA": Person(id: 202, name: "A.Y.", fullName: "吉田 彩", role: "CA", airline: "JAL", base: "NRT", years: 6,
-                            note: "研修同期です",
-                            stays: [
-                                StayEntry(day: 7, location: "OKA", from: "18:30"),
-                                StayEntry(day: 14, location: "CTS", from: "19:00"),
-                                StayEntry(day: 28, location: "OKA", from: "20:30"),
-                            ]),
-    ]
-}
-
-enum SampleFriends {
-    static let initial: [Person] = [
-        Person(id: 301, name: "S.K.", fullName: "小林 沙耶", role: "CA", airline: "ANA", base: "HND", years: 5,
-               note: "大学の後輩です",
-               stays: [
-                StayEntry(day: 6, location: "OKA", from: "19:00"),
-                StayEntry(day: 13, location: "KIX", from: "18:30"),
-                StayEntry(day: 20, location: "FUK", from: "19:00"),
-               ]),
-        Person(id: 302, name: "H.T.", fullName: "田中 陽介", role: "CPT", airline: "JAL", base: "HND", years: 12,
-               note: "訓練同期です",
-               stays: [
-                StayEntry(day: 6, location: "OKA", from: "20:00"),
-                StayEntry(day: 18, location: "CTS", from: "19:00"),
-                StayEntry(day: 25, location: "FUK", from: "18:00"),
-               ]),
-    ]
-}
-
-let maxReferralCodesPerUser = 3
-
-/// Demo referral codes issued by other already-verified users.
-enum SampleReferralCodes {
-    static let initial: [String: ReferralCodeEntry] = [
-        "SENPAI-T7K2": ReferralCodeEntry(referrerName: "田中 陽介", used: false),
-        "SENPAI-M9Q4": ReferralCodeEntry(referrerName: "小林 沙耶", used: false),
     ]
 }

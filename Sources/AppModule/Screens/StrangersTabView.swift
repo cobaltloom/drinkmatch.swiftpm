@@ -8,12 +8,11 @@ struct StrangersTabView: View {
     var body: some View {
         if !store.isVerified {
             EmailVerifyGateView(
-                referralCodes: store.referralCodes,
-                onUseReferralCode: store.useReferralCode,
-                onVerified: store.markVerified
+                onSubmitEmail: { email in await store.verifyEmail(email) },
+                onSubmitReferralCode: { code in await store.redeemReferralCodeForVerification(code) }
             )
         } else if !store.isSubscribed {
-            PaywallGateView(onSubscribed: store.markSubscribed)
+            PaywallGateView(onSubscribed: { Task { await store.markSubscribed() } })
         } else {
             StrangersSearchView(store: store)
         }
@@ -27,20 +26,6 @@ private struct StrangersSearchView: View {
     @State private var filterRole = "ALL"
     @State private var tabMode: OfferTabMode = .individual
 
-    private var candidatePool: [Person] {
-        SampleStrangers.all.filter { !store.passed.contains($0.id) }
-    }
-
-    private var visible: [Person] {
-        candidatePool
-            .filter { filterBase == "ALL" || $0.base == filterBase }
-            .filter { filterRole == "ALL" || $0.role == filterRole }
-            .sorted {
-                matchStays(mine: store.mySchedule, theirs: $0.stays).count
-                    > matchStays(mine: store.mySchedule, theirs: $1.stays).count
-            }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             OfferTabModeSwitcher(mode: $tabMode)
@@ -48,10 +33,12 @@ private struct StrangersSearchView: View {
             if tabMode == .group {
                 GroupOrganizerView(
                     mySchedule: store.mySchedule,
-                    candidates: candidatePool,
+                    candidates: store.strangerCandidates,
                     showFullName: false,
-                    viewerAware: false,
-                    onSubmit: store.createGroupOffer
+                    overlapByCandidateID: store.overlapCache,
+                    onSubmit: { day, location, members, autoAccept in
+                        Task { await store.createGroupOffer(day: day, location: location, members: members, autoAccept: autoAccept) }
+                    }
                 )
             } else {
                 HStack(alignment: .top, spacing: 8) {
@@ -59,26 +46,31 @@ private struct StrangersSearchView: View {
                     roleFilterMenu
                 }
 
-                if visible.isEmpty {
+                if store.strangerCandidates.isEmpty {
                     Text("候補はすべて確認済みです。")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.faint)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                 } else {
-                    ForEach(visible) { person in
+                    ForEach(store.strangerCandidates) { person in
                         PersonCardView(
                             person: person,
-                            mySchedule: store.mySchedule,
+                            overlap: store.overlapCache[person.id] ?? [],
                             offerStatus: store.status(for: person.id),
                             showFullName: false,
                             defaultAutoAccept: false,
-                            onOffer: { store.sendOffer(to: $0, autoAccept: $1) },
-                            onPass: { store.pass($0) }
+                            onOffer: { person, overlap, autoAccept in
+                                Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }
+                            },
+                            onPass: { person in Task { await store.pass(person) } }
                         )
                     }
                 }
             }
+        }
+        .task(id: "\(filterBase)|\(filterRole)") {
+            await store.loadStrangerCandidates(baseAirport: filterBase, role: filterRole)
         }
     }
 

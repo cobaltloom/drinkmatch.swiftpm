@@ -6,11 +6,13 @@ struct GroupOrganizerView: View {
     var mySchedule: [StayEntry]
     var candidates: [Person]
     var showFullName: Bool
-    var viewerAware: Bool
+    /// Pre-computed by the store via `get_match_overlap`, one entry per
+    /// candidate id — see the note on PersonCardView.overlap.
+    var overlapByCandidateID: [UUID: [StayOverlap]]
     var onSubmit: (Int, String, [Person], Bool) -> Void
 
     @State private var slotDay: Int?
-    @State private var selectedIDs: Set<Int> = []
+    @State private var selectedIDs: Set<UUID> = []
     @State private var autoAccept = false
 
     private var slotOptions: [StayEntry] {
@@ -22,7 +24,7 @@ struct GroupOrganizerView: View {
     private var matchingCandidates: [Person] {
         guard let slot else { return [] }
         return candidates.filter { candidate in
-            let overlap = matchStays(mine: mySchedule, theirs: candidate.stays, viewerPersonID: viewerAware ? candidate.id : nil)
+            let overlap = overlapByCandidateID[candidate.id] ?? []
             return overlap.contains { $0.day == slot.day && $0.location == slot.location }
         }
     }
@@ -84,7 +86,7 @@ struct GroupOrganizerView: View {
         }
     }
 
-    private func toggle(_ id: Int) {
+    private func toggle(_ id: UUID) {
         if selectedIDs.contains(id) { selectedIDs.remove(id) } else { selectedIDs.insert(id) }
     }
 

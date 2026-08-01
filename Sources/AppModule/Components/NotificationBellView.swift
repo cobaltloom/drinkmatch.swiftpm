@@ -51,7 +51,9 @@ private struct NotificationListView: View {
                         .frame(maxWidth: .infinity)
                         .padding(14)
                 } else {
-                    ForEach(notifications.reversed()) { notification in
+                    // Pre-sorted newest-first by the server (`order by
+                    // created_at desc` in SupabaseRepository.fetchNotifications).
+                    ForEach(notifications) { notification in
                         Text(notification.body)
                             .font(.system(size: 12))
                             .foregroundStyle(notification.read ? Theme.muted : Theme.text)

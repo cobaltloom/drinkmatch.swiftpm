@@ -36,10 +36,6 @@ func airportLabel(_ code: String) -> String {
     "\(code) (\(airportName(code)))"
 }
 
-func normalizeLocation(_ raw: String) -> String {
-    raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-}
-
 func computeInitials(_ fullName: String) -> String {
     let parts = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
         .split(separator: " ")
@@ -56,22 +52,6 @@ struct StayOverlap: Identifiable, Hashable {
     var myFrom: String
     var otherFrom: String
     var id: Int { day }
-}
-
-/// Finds every day where `mine` and `theirs` share the same day and airport
-/// code. When `viewerPersonID` is supplied, entries hidden from that person
-/// (friends-only privacy) are excluded first.
-func matchStays(mine: [StayEntry], theirs: [StayEntry], viewerPersonID: Int? = nil) -> [StayOverlap] {
-    var results: [StayOverlap] = []
-    for entry in mine {
-        if let viewerPersonID, entry.hiddenFrom.contains(viewerPersonID) { continue }
-        guard !entry.location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
-        for other in theirs where other.day == entry.day
-            && normalizeLocation(other.location) == normalizeLocation(entry.location) {
-            results.append(StayOverlap(day: entry.day, location: entry.location, myFrom: entry.from, otherFrom: other.from))
-        }
-    }
-    return results.sorted { $0.day < $1.day }
 }
 
 /// The later (i.e. more restrictive / safer) of two "available from" times,

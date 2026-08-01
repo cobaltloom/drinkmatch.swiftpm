@@ -6,7 +6,7 @@ struct MatchesView: View {
     var store: AppStore
 
     private enum Entry: Hashable {
-        case individual(Int)
+        case individual(UUID)
         case group(String)
     }
 
@@ -47,7 +47,10 @@ struct MatchesView: View {
                 }
             }
         }
-        .onAppear { if activeEntry == nil { activeEntry = entries.first } }
+        .task {
+            await store.loadMatches()
+            if activeEntry == nil { activeEntry = entries.first }
+        }
     }
 
     // MARK: - Sidebar
@@ -70,7 +73,7 @@ struct MatchesView: View {
                 if let match = store.matches.first(where: { $0.id == id }) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(match.person.fullName ?? match.person.name).font(.system(size: 12, weight: .bold))
-                        Text(match.status == .accepted ? "マッチ成立" : "承諾待ち")
+                        Text(statusLabel(for: match))
                             .font(.system(size: 11))
                             .foregroundStyle(match.status == .accepted ? Theme.green : Theme.amberDim)
                     }
@@ -95,6 +98,14 @@ struct MatchesView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 
+    private func statusLabel(for match: MatchedPerson) -> String {
+        switch match.status {
+        case .accepted: return "マッチ成立"
+        case .expired: return "期限切れ"
+        case .pending: return match.isIncoming ? "承諾待ち(あなた)" : "承諾待ち(相手)"
+        }
+    }
+
     // MARK: - Detail pane
 
     @ViewBuilder
@@ -108,10 +119,13 @@ struct MatchesView: View {
             if let group = store.groups.first(where: { $0.id == id }) {
                 GroupDetailView(
                     group: group,
-                    onAcceptMember: { store.acceptGroupMember(groupID: group.id, memberID: $0) },
+                    myUserID: store.authUserID,
+                    onAcceptOwnMembership: { Task { await store.acceptGroupMembership(groupOfferID: group.id) } },
                     composeTime: $composeTime,
                     composePlace: $composePlace,
-                    onSendProposal: { store.sendGroupProposal(groupID: group.id, time: timeString(from: composeTime), place: composePlace) }
+                    onSendProposal: {
+                        Task { await store.sendGroupProposal(groupOfferID: group.id, time: timeString(from: composeTime), place: composePlace) }
+                    }
                 )
             }
         case nil:
@@ -129,14 +143,30 @@ struct MatchesView: View {
                     .foregroundStyle(Theme.faint)
             }
 
-            if match.status != .accepted {
+            if match.status == .expired {
+                Text("この誘いは有効期限が切れました。")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.field)
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.fieldBorder))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else if match.status != .accepted {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("この誘いは自動承諾を選ばなかったため、相手が承諾するまで集合案は送れません。")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button("(デモ)相手が承諾したことにする") { store.simulateAccept(personID: match.id) }
-                        .buttonStyle(BoardOutlineButtonStyle())
+                    if match.isIncoming {
+                        Text("\(match.person.fullName ?? match.person.name)さんから誘いが届いています。")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("承諾する") { Task { await store.acceptOffer(offerID: match.offerID) } }
+                            .buttonStyle(BoardButtonStyle())
+                    } else {
+                        Text("この誘いは自動承諾を選ばなかったため、相手が承諾するまで集合案は送れません。")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .padding(14)
                 .background(Theme.field)
@@ -152,13 +182,15 @@ struct MatchesView: View {
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
                         ReadOnlyStayCalendar(stays: match.person.stays) { entry in
-                            store.sendProposal(
-                                personID: match.id,
-                                day: entry.day,
-                                location: entry.location,
-                                time: timeString(from: composeTime),
-                                place: composePlace
-                            )
+                            Task {
+                                await store.sendProposal(
+                                    offerID: match.offerID,
+                                    day: entry.day,
+                                    location: entry.location,
+                                    time: timeString(from: composeTime),
+                                    place: composePlace
+                                )
+                            }
                         }
                         DatePicker("", selection: $composeTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()

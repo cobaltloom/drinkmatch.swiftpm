@@ -20,15 +20,15 @@ struct StayEntry: Identifiable, Hashable {
     var day: Int
     var location: String = ""
     var from: String = "19:00"
-    /// Friend ids this entry is hidden from (friends-matching privacy only).
-    var hiddenFrom: [Int] = []
+    /// Friend user ids this entry is hidden from (friends-matching privacy only).
+    var hiddenFrom: [UUID] = []
     var id: Int { day }
 }
 
 /// A fellow crew member, whether a known friend, someone found through an
 /// invite/referral code, or a stranger surfaced by new-match search.
 struct Person: Identifiable, Hashable {
-    var id: Int
+    var id: UUID
     /// Short display name (initials, nickname, or short form) always safe to show.
     var name: String
     /// Full name — only present for verified acquaintances (friends), never
@@ -46,24 +46,33 @@ struct Person: Identifiable, Hashable {
     }
 }
 
-enum OfferStatus: String, Hashable {
+enum OfferStatus: String, Hashable, Codable {
     case pending
     case accepted
+    case expired
 }
 
 /// A person you've sent (or received) a 1:1 drink offer with.
 struct MatchedPerson: Identifiable, Hashable {
     var person: Person
+    /// The underlying `offers` row id — needed for accept/proposal calls,
+    /// which act on a specific offer, not just "this person" (the backend
+    /// pins an offer to one day + airport; see PersonCardView.onOffer).
+    var offerID: UUID
     var status: OfferStatus
+    /// True if this offer was sent *to* me (I can accept it); false if I
+    /// sent it (only the recipient can accept — `accept_offer` is
+    /// `to_user_id = auth.uid()`-scoped server-side).
+    var isIncoming: Bool
     var sentProposal: Proposal? = nil
-    var id: Int { person.id }
+    var id: UUID { person.id }
 }
 
 /// A member of a group offer, with their own independent accept status.
 struct GroupMember: Identifiable, Hashable {
     var person: Person
     var status: OfferStatus
-    var id: Int { person.id }
+    var id: UUID { person.id }
 }
 
 /// A group drink invitation tied to one shared day + stay airport.
@@ -91,7 +100,7 @@ struct AppNotification: Identifiable {
     var read: Bool
 }
 
-enum DisplayMode: String, Hashable {
+enum DisplayMode: String, Hashable, Codable {
     case initials
     case nickname
 }
@@ -114,18 +123,6 @@ struct UserProfile {
             return computeInitials(fullName)
         }
     }
-}
-
-enum VerificationMethod {
-    case email(String)
-    case referral(referrerName: String)
-}
-
-/// A single-use referral code issued by an already-verified user, used as an
-/// alternative identity-verification route for the new-match flow.
-struct ReferralCodeEntry {
-    var referrerName: String
-    var used: Bool
 }
 
 /// Top-level screen the root view is currently showing.

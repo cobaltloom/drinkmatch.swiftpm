@@ -9,10 +9,6 @@ struct FriendsTabView: View {
     @State private var errorMessage = ""
     @State private var tabMode: OfferTabMode = .individual
 
-    private var sortedFriends: [Person] {
-        store.friends.sorted { overlapCount(for: $0) > overlapCount(for: $1) }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             BoardCard {
@@ -27,13 +23,15 @@ struct FriendsTabView: View {
                         .background(Theme.field)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-                    Button("追加") { addFriend() }
+                    Button("追加") { Task { await addFriend() } }
                         .buttonStyle(BoardOutlineButtonStyle())
                 }
                 if !errorMessage.isEmpty {
                     Text(errorMessage).font(.system(size: 11)).foregroundStyle(Theme.red).padding(.top, 6)
                 }
             }
+
+            InviteCodeGeneratorView(codes: store.myInviteCodes, onGenerate: { Task { await store.generateInviteCode() } })
 
             OfferTabModeSwitcher(mode: $tabMode)
 
@@ -42,38 +40,41 @@ struct FriendsTabView: View {
                     mySchedule: store.mySchedule,
                     candidates: store.friends,
                     showFullName: true,
-                    viewerAware: true,
-                    onSubmit: store.createGroupOffer
+                    overlapByCandidateID: store.overlapCache,
+                    onSubmit: { day, location, members, autoAccept in
+                        Task { await store.createGroupOffer(day: day, location: location, members: members, autoAccept: autoAccept) }
+                    }
                 )
-            } else if sortedFriends.isEmpty {
+            } else if store.friends.isEmpty {
                 Text("まだ知り合いが登録されていません。")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 20)
             } else {
-                ForEach(sortedFriends) { person in
+                ForEach(store.friends) { person in
                     PersonCardView(
                         person: person,
-                        mySchedule: store.mySchedule,
+                        overlap: store.overlapCache[person.id] ?? [],
                         offerStatus: store.status(for: person.id),
                         showFullName: true,
                         defaultAutoAccept: true,
-                        viewerFriendID: person.id,
-                        onOffer: { store.sendOffer(to: $0, autoAccept: $1) },
-                        onPass: { store.pass($0) }
+                        onOffer: { person, overlap, autoAccept in
+                            Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }
+                        },
+                        onPass: { person in Task { await store.pass(person) } }
                     )
                 }
             }
         }
+        .task {
+            await store.loadFriends()
+            await store.loadMyInviteCodes()
+        }
     }
 
-    private func overlapCount(for person: Person) -> Int {
-        matchStays(mine: store.mySchedule, theirs: person.stays, viewerPersonID: person.id).count
-    }
-
-    private func addFriend() {
-        if let error = store.addFriend(byInviteCode: code) {
+    private func addFriend() async {
+        if let error = await store.addFriend(byInviteCode: code) {
             errorMessage = error
         } else {
             code = ""

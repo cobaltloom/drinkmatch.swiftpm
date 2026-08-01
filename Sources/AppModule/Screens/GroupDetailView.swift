@@ -4,7 +4,11 @@ import SwiftUI
 /// least one member has accepted — a form to send the meetup proposal.
 struct GroupDetailView: View {
     var group: DrinkGroup
-    var onAcceptMember: (Int) -> Void
+    /// Needed to tell "my own membership row" (which I can accept) apart
+    /// from everyone else's (read-only — accepting is `auth.uid()`-scoped
+    /// server-side, so I can't act on another member's behalf).
+    var myUserID: UUID?
+    var onAcceptOwnMembership: () -> Void
     @Binding var composeTime: Date
     @Binding var composePlace: String
     var onSendProposal: () -> Void
@@ -27,9 +31,11 @@ struct GroupDetailView: View {
                         Spacer()
                         if member.status == .accepted {
                             Text("承諾済み").font(.system(size: 11)).foregroundStyle(Theme.green)
-                        } else {
-                            Button("(デモ)承諾させる") { onAcceptMember(member.id) }
+                        } else if member.id == myUserID {
+                            Button("参加する") { onAcceptOwnMembership() }
                                 .buttonStyle(BoardOutlineButtonStyle())
+                        } else {
+                            Text("承諾待ち").font(.system(size: 11)).foregroundStyle(Theme.amberDim)
                         }
                     }
                     .padding(.horizontal, 10)

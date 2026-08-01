@@ -6,12 +6,16 @@ struct MainView: View {
     @Bindable var store: AppStore
 
     private var profileBinding: Binding<UserProfile> {
-        Binding(get: { store.profile ?? UserProfile(role: Roles.all[0].code, base: Bases.all[0], fullName: "", displayMode: .initials, nickname: "") },
-                set: { store.profile = $0 })
-    }
-
-    private var myReferralCodePairs: [(code: String, used: Bool)] {
-        store.myReferralCodes.map { code in (code: code, used: store.referralCodes[code]?.used ?? false) }
+        Binding(
+            get: { store.profile ?? UserProfile(role: Roles.all[0].code, base: Bases.all[0], fullName: "", displayMode: .initials, nickname: "") },
+            set: { newValue in
+                let old = store.profile
+                store.profile = newValue
+                if old?.displayMode != newValue.displayMode || old?.nickname != newValue.nickname {
+                    Task { await store.updateDisplayPreference(displayMode: newValue.displayMode, nickname: newValue.nickname) }
+                }
+            }
+        )
     }
 
     private var scheduleSummary: String {
@@ -26,11 +30,20 @@ struct MainView: View {
                 Text("CREW BOARD").splitFlap(20, weight: .bold).foregroundStyle(Theme.amber)
                 Spacer()
                 HStack(spacing: 6) {
-                    NotificationBellView(notifications: store.notifications, onOpen: store.markAllNotificationsRead)
+                    NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
                     Button("スケジュール編集") { store.screen = .schedule }
                         .buttonStyle(BoardChromeButtonStyle())
                     Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
                         .buttonStyle(BoardChromeButtonStyle())
+                    Menu {
+                        Button("サインアウト", role: .destructive) { Task { await store.signOut() } }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.text)
+                            .frame(width: 30, height: 30)
+                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+                    }
                 }
             }
             .padding(.bottom, 4)
@@ -39,7 +52,7 @@ struct MainView: View {
                 Text("職種:").font(.system(size: 11)).foregroundStyle(Theme.faint)
                 Menu {
                     ForEach(Roles.all) { role in
-                        Button(role.label) { store.profile?.role = role.code }
+                        Button(role.label) { Task { await store.updateRole(role.code) } }
                     }
                 } label: {
                     Text(Roles.label(for: store.profile?.role ?? ""))
@@ -62,7 +75,7 @@ struct MainView: View {
                 .padding(.bottom, 14)
 
             if store.isVerified {
-                ReferralCodeGeneratorView(codes: myReferralCodePairs, onGenerate: store.generateReferralCode)
+                ReferralCodeGeneratorView(codes: store.myReferralCodes, onGenerate: { Task { await store.generateReferralCode() } })
                     .padding(.bottom, 14)
             }
 
@@ -77,6 +90,10 @@ struct MainView: View {
             } else {
                 StrangersTabView(store: store)
             }
+        }
+        .task {
+            await store.loadNotifications()
+            if store.isVerified { await store.loadMyReferralCodes() }
         }
     }
 
