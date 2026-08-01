@@ -80,6 +80,15 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
 - **"見送る" (pass) persists server-side** (`passed_candidates` table)
   instead of only living in local component state, so it survives across
   devices/reinstalls.
+- **Report/block** (App Store Review Guideline 1.2 — required for any app
+  with user-to-user interaction): a flag icon on `PersonCardView` and on a
+  match's detail pane in `MatchesView` opens `ReportBlockSheet` (reason
+  picker + optional details, plus an independent "ブロックする" action).
+  Blocking calls `AppStore.blockUser`, which removes the person from
+  friends/candidates/matches locally and from every enforcement point
+  server-side (`is_blocked`, see drinkmatch-backend's README "Report/block").
+  Blocked users are managed from MainView's overflow menu →
+  "ブロック中のユーザー" (`BlockedUsersView`), which can unblock.
 
 ## Not done yet
 
@@ -87,8 +96,6 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   "(デモ)購入して新しい人と探す" still just flips a local flag and doesn't
   persist (see drinkmatch-backend's README "Billing").
 - APNs push delivery — notifications only show in-app.
-- Report/block — required by App Store Review Guideline 1.2 before this can
-  ship; not started on either client or backend.
 - Age/alcohol-guideline confirmation at signup.
 - Editing your own airline/years-of-service/note — the onboarding form never
   collected these, even though the backend and other users' cards support

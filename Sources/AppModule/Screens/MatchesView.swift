@@ -13,6 +13,7 @@ struct MatchesView: View {
     @State private var activeEntry: Entry?
     @State private var composeTime = date(fromTimeString: "19:30")
     @State private var composePlace = ""
+    @State private var showingReportSheet = false
 
     private var entries: [Entry] {
         store.matches.map { .individual($0.id) } + store.groups.map { .group($0.id) }
@@ -141,6 +142,25 @@ struct MatchesView: View {
                 Text("(\(match.person.airline) / \(match.person.base))")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
+                Spacer()
+                Button {
+                    showingReportSheet = true
+                } label: {
+                    Image(systemName: "flag").font(.system(size: 12)).foregroundStyle(Theme.faint)
+                }
+                .buttonStyle(.plain)
+            }
+            .sheet(isPresented: $showingReportSheet) {
+                ReportBlockSheet(
+                    person: match.person,
+                    onSubmitReport: { reason, details in
+                        await store.submitReport(reportedUserID: match.person.id, reason: reason, details: details, offerID: match.offerID)
+                    },
+                    onBlock: {
+                        await store.blockUser(match.person.id)
+                        activeEntry = nil
+                    }
+                )
             }
 
             if match.status == .expired {

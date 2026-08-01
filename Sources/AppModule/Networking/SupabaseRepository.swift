@@ -283,6 +283,32 @@ enum SupabaseRepository {
         return rows.first
     }
 
+    // MARK: - Report / block
+
+    static func blockUser(userID: UUID) async throws {
+        _ = try await client.rpc("block_user", params: BlockUserParams(userId: userID)).execute()
+    }
+
+    static func unblockUser(userID: UUID) async throws {
+        _ = try await client.rpc("unblock_user", params: BlockUserParams(userId: userID)).execute()
+    }
+
+    static func fetchBlockedUsers() async throws -> [BlockedUserRow] {
+        try await client.rpc("list_blocked_users").execute().value
+    }
+
+    @discardableResult
+    static func submitReport(reportedUserID: UUID, reason: ReportReason, details: String?, offerID: UUID?, groupOfferID: UUID?) async throws -> UUID {
+        let params = SubmitReportParams(
+            reportedUserId: reportedUserID,
+            reason: reason.rawValue,
+            details: details,
+            offerId: offerID,
+            groupOfferId: groupOfferID
+        )
+        return try await client.rpc("submit_report", params: params).execute().value
+    }
+
     // MARK: - Notifications
 
     static func fetchNotifications() async throws -> [NotificationRow] {

@@ -18,12 +18,16 @@ struct PersonCardView: View {
     /// per overlapping day, not per person.
     var onOffer: (Person, StayOverlap, Bool) -> Void
     var onPass: (Person) -> Void
+    var onReport: (Person, ReportReason, String) async -> String?
+    var onBlock: (Person) async -> Void
 
     @State private var autoAccept: Bool
+    @State private var showingReportSheet = false
 
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, showFullName: Bool,
          defaultAutoAccept: Bool,
-         onOffer: @escaping (Person, StayOverlap, Bool) -> Void, onPass: @escaping (Person) -> Void) {
+         onOffer: @escaping (Person, StayOverlap, Bool) -> Void, onPass: @escaping (Person) -> Void,
+         onReport: @escaping (Person, ReportReason, String) async -> String?, onBlock: @escaping (Person) async -> Void) {
         self.person = person
         self.overlap = overlap
         self.offerStatus = offerStatus
@@ -31,6 +35,8 @@ struct PersonCardView: View {
         self.defaultAutoAccept = defaultAutoAccept
         self.onOffer = onOffer
         self.onPass = onPass
+        self.onReport = onReport
+        self.onBlock = onBlock
         _autoAccept = State(initialValue: defaultAutoAccept)
     }
 
@@ -42,6 +48,15 @@ struct PersonCardView: View {
                 Text(overlap.isEmpty ? "共通ステイ先なし" : "同じステイ先あり")
                     .font(.system(size: 11))
                     .foregroundStyle(overlap.isEmpty ? Theme.red : Theme.green)
+                Button {
+                    showingReportSheet = true
+                } label: {
+                    Image(systemName: "flag")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.faint)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 8)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -100,6 +115,13 @@ struct PersonCardView: View {
             }
         }
         .padding(.bottom, 10)
+        .sheet(isPresented: $showingReportSheet) {
+            ReportBlockSheet(
+                person: person,
+                onSubmitReport: { reason, details in await onReport(person, reason, details) },
+                onBlock: { await onBlock(person) }
+            )
+        }
     }
 }
 

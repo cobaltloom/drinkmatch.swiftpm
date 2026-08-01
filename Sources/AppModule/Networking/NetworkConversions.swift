@@ -54,6 +54,10 @@ enum BackendErrorCode: String {
     case offerNotAccepted = "offer_not_accepted"
     case notAuthorized = "not_authorized"
     case cannotOfferSelf = "cannot_offer_self"
+    case cannotBlockSelf = "cannot_block_self"
+    case cannotReportSelf = "cannot_report_self"
+    case userBlocked = "user_blocked"
+    case userNotFound = "user_not_found"
 
     /// Best-effort match against a thrown error's description — the
     /// PostgrestError message contains the RAISE EXCEPTION text verbatim.
@@ -67,5 +71,6 @@ enum BackendErrorCode: String {
         .referralCodeCapReached, .referralCodeNotFound, .referralCodeAlreadyUsed, .referralCodeSelfUse,
         .inviteCodeNotFound, .inviteCodeAlreadyUsed, .inviteCodeSelfUse,
         .offerNotFound, .offerNotPending, .offerNotAccepted, .notAuthorized, .cannotOfferSelf,
+        .cannotBlockSelf, .cannotReportSelf, .userBlocked, .userNotFound,
     ]
 }

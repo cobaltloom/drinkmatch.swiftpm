@@ -105,6 +105,39 @@ enum DisplayMode: String, Hashable, Codable {
     case nickname
 }
 
+/// Matches the backend's `report_reason` Postgres enum
+/// (drinkmatch-backend's 20260801000011_reports_and_blocks.sql) — rawValue
+/// is sent verbatim as the `submit_report` RPC's `p_reason` argument.
+enum ReportReason: String, CaseIterable, Identifiable, Hashable {
+    case harassment
+    case inappropriateContent = "inappropriate_content"
+    case fakeProfile = "fake_profile"
+    case safetyConcern = "safety_concern"
+    case spam
+    case other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .harassment: return "嫌がらせ・迷惑行為"
+        case .inappropriateContent: return "不適切なコンテンツ"
+        case .fakeProfile: return "なりすまし・虚偽のプロフィール"
+        case .safetyConcern: return "安全上の懸念"
+        case .spam: return "スパム"
+        case .other: return "その他"
+        }
+    }
+}
+
+/// A user this account has blocked — see the "ブロック中のユーザー"
+/// management screen reachable from MainView.
+struct BlockedUser: Identifiable, Hashable {
+    var userID: UUID
+    var displayName: String
+    var id: UUID { userID }
+}
+
 /// The signed-in user's profile, including how they want to appear to
 /// strangers in the new-match flow.
 struct UserProfile {

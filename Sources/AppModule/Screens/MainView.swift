@@ -5,6 +5,8 @@ import SwiftUI
 struct MainView: View {
     @Bindable var store: AppStore
 
+    @State private var showingBlockedUsers = false
+
     private var profileBinding: Binding<UserProfile> {
         Binding(
             get: { store.profile ?? UserProfile(role: Roles.all[0].code, base: Bases.all[0], fullName: "", displayMode: .initials, nickname: "") },
@@ -36,6 +38,7 @@ struct MainView: View {
                     Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
                         .buttonStyle(BoardChromeButtonStyle())
                     Menu {
+                        Button("ブロック中のユーザー") { showingBlockedUsers = true }
                         Button("サインアウト", role: .destructive) { Task { await store.signOut() } }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -94,6 +97,9 @@ struct MainView: View {
         .task {
             await store.loadNotifications()
             if store.isVerified { await store.loadMyReferralCodes() }
+        }
+        .sheet(isPresented: $showingBlockedUsers) {
+            BlockedUsersView(store: store)
         }
     }
 

@@ -62,7 +62,11 @@ struct FriendsTabView: View {
                         onOffer: { person, overlap, autoAccept in
                             Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }
                         },
-                        onPass: { person in Task { await store.pass(person) } }
+                        onPass: { person in Task { await store.pass(person) } },
+                        onReport: { person, reason, details in
+                            await store.submitReport(reportedUserID: person.id, reason: reason, details: details)
+                        },
+                        onBlock: { person in await store.blockUser(person.id) }
                     )
                 }
             }

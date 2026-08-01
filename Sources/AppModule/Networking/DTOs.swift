@@ -89,6 +89,26 @@ struct CreateGroupOfferParams: Encodable {
     }
 }
 
+struct BlockUserParams: Encodable {
+    var userId: UUID
+    enum CodingKeys: String, CodingKey { case userId = "p_user_id" }
+}
+
+struct SubmitReportParams: Encodable {
+    var reportedUserId: UUID
+    var reason: String
+    var details: String?
+    var offerId: UUID?
+    var groupOfferId: UUID?
+    enum CodingKeys: String, CodingKey {
+        case reportedUserId = "p_reported_user_id"
+        case reason = "p_reason"
+        case details = "p_details"
+        case offerId = "p_offer_id"
+        case groupOfferId = "p_group_offer_id"
+    }
+}
+
 struct SendProposalParams: Encodable {
     var day: String
     var airportCode: String
@@ -337,6 +357,18 @@ struct ProposalRow: Decodable {
         guard let dayOfMonth = dayOfMonth(fromPostgresDate: day) else { return nil }
         return Proposal(day: dayOfMonth, location: airportCode, time: clientTimeString(fromPostgresTime: meetingTime), place: place ?? "")
     }
+}
+
+struct BlockedUserRow: Decodable {
+    var userId: UUID
+    var displayName: String
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case displayName = "display_name"
+    }
+
+    var asBlockedUser: BlockedUser { BlockedUser(userID: userId, displayName: displayName) }
 }
 
 struct NotificationRow: Decodable, Identifiable {

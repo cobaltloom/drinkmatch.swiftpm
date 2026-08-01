@@ -35,6 +35,7 @@ final class AppStore {
     var notifications: [AppNotification] = []
     var myReferralCodes: [(code: String, used: Bool)] = []
     var myInviteCodes: [(code: String, used: Bool)] = []
+    var blockedUsers: [BlockedUser] = []
 
     var lastErrorMessage: String?
 
@@ -89,6 +90,7 @@ final class AppStore {
         notifications = []
         myReferralCodes = []
         myInviteCodes = []
+        blockedUsers = []
         screen = .profile
     }
 
@@ -452,6 +454,54 @@ final class AppStore {
             await loadMatches()
         } catch {
             lastErrorMessage = "集合案の送信に失敗しました。"
+        }
+    }
+
+    // MARK: - Report / block
+
+    /// Removes the blocked person from every local list — the backend also
+    /// excludes them going forward, but the current screen shouldn't wait
+    /// for a reload to reflect it.
+    func blockUser(_ userID: UUID) async {
+        do {
+            try await SupabaseRepository.blockUser(userID: userID)
+            friends.removeAll { $0.id == userID }
+            strangerCandidates.removeAll { $0.id == userID }
+            matches.removeAll { $0.id == userID }
+            overlapCache[userID] = nil
+            await loadBlockedUsers()
+        } catch {
+            lastErrorMessage = "ブロックに失敗しました。"
+        }
+    }
+
+    func unblockUser(_ userID: UUID) async {
+        do {
+            try await SupabaseRepository.unblockUser(userID: userID)
+            blockedUsers.removeAll { $0.userID == userID }
+        } catch {
+            lastErrorMessage = "ブロックの解除に失敗しました。"
+        }
+    }
+
+    func loadBlockedUsers() async {
+        do {
+            blockedUsers = try await SupabaseRepository.fetchBlockedUsers().map(\.asBlockedUser)
+        } catch {
+            lastErrorMessage = "ブロック中のユーザーの読み込みに失敗しました。"
+        }
+    }
+
+    /// Returns an error message to show the user, or nil on success.
+    func submitReport(reportedUserID: UUID, reason: ReportReason, details: String, offerID: UUID? = nil, groupOfferID: UUID? = nil) async -> String? {
+        do {
+            _ = try await SupabaseRepository.submitReport(
+                reportedUserID: reportedUserID, reason: reason,
+                details: details.isEmpty ? nil : details, offerID: offerID, groupOfferID: groupOfferID
+            )
+            return nil
+        } catch {
+            return "報告の送信に失敗しました。"
         }
     }
 }
