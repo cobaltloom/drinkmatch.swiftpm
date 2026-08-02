@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import StoreKit
 import Supabase
 
 /// Single source of truth for the app, backed by the drinkmatch-backend
@@ -31,6 +32,10 @@ final class AppStore {
 
     var isVerified = false
     var isSubscribed = false
+    /// Same catalog product for every account, so unlike the rest of this
+    /// state it's not cleared on sign-out in resetLocalState().
+    var subscriptionProduct: Product?
+    var isPurchasing = false
 
     var notifications: [AppNotification] = []
     var myReferralCodes: [(code: String, used: Bool)] = []
@@ -242,12 +247,55 @@ final class AppStore {
         }
     }
 
-    /// Demo-only stand-in until StoreKit + the App Store Server
-    /// Notifications webhook exist (see drinkmatch-backend's README
-    /// "Billing"). This does NOT persist server-side — `subscriptions` is
-    /// only writable by that future webhook — so it reverts on next launch.
-    func markSubscribed() async {
-        isSubscribed = true
+    func loadSubscriptionProduct() async {
+        subscriptionProduct = try? await StoreKitManager.fetchSubscriptionProduct()
+    }
+
+    func purchaseSubscription() async {
+        guard let product = subscriptionProduct, let userID = authUserID, !isPurchasing else { return }
+        isPurchasing = true
+        defer { isPurchasing = false }
+        do {
+            switch try await StoreKitManager.purchase(product, appAccountToken: userID) {
+            case .verified(let transaction):
+                try await SupabaseRepository.verifyPurchase(transactionJWS: transaction.jwsRepresentation)
+                await transaction.finish()
+                await refreshSubscriptionStatus()
+            case .pending, .userCancelled:
+                break
+            }
+        } catch {
+            lastErrorMessage = "購入の確認に失敗しました。しばらくしてからもう一度お試しください。"
+        }
+    }
+
+    func restorePurchases() async {
+        do {
+            try await StoreKitManager.restorePurchases()
+            await refreshSubscriptionStatus()
+        } catch {
+            lastErrorMessage = "購入履歴の復元に失敗しました。"
+        }
+    }
+
+    /// Runs for the lifetime of the app (started as its own concurrent
+    /// `.task` from RootView, alongside bootstrap()'s auth-state loop) —
+    /// catches renewals/restores/Ask-to-Buy approvals that complete outside
+    /// a direct purchaseSubscription() call, e.g. on another device.
+    func observeTransactionUpdates() async {
+        for await result in Transaction.updates {
+            guard case .verified(let transaction) = result else { continue }
+            try? await SupabaseRepository.verifyPurchase(transactionJWS: transaction.jwsRepresentation)
+            await transaction.finish()
+            await refreshSubscriptionStatus()
+        }
+    }
+
+    private func refreshSubscriptionStatus() async {
+        guard let userID = authUserID else { return }
+        if let row = try? await SupabaseRepository.fetchProfile(userID: userID) {
+            isSubscribed = row.isSubscribed
+        }
     }
 
     func loadMyReferralCodes() async {

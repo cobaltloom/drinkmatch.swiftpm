@@ -12,7 +12,7 @@ struct StrangersTabView: View {
                 onSubmitReferralCode: { code in await store.redeemReferralCodeForVerification(code) }
             )
         } else if !store.isSubscribed {
-            PaywallGateView(onSubscribed: { Task { await store.markSubscribed() } })
+            PaywallGateView(store: store)
         } else {
             StrangersSearchView(store: store)
         }

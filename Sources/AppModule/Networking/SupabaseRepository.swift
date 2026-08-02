@@ -283,6 +283,18 @@ enum SupabaseRepository {
         return rows.first
     }
 
+    // MARK: - Billing
+
+    /// Calls drinkmatch-backend's verify-purchase Edge Function right after
+    /// a local StoreKit 2 purchase, so the caller unlocks stranger-matching
+    /// immediately instead of waiting on Apple's async server notification.
+    static func verifyPurchase(transactionJWS: String) async throws {
+        try await client.functions.invoke(
+            "verify-purchase",
+            options: FunctionInvokeOptions(body: VerifyPurchaseBody(transactionJWS: transactionJWS))
+        )
+    }
+
     // MARK: - Report / block
 
     static func blockUser(userID: UUID) async throws {

@@ -15,6 +15,14 @@ toolchain and no live Supabase project to test against. Open it in Swift
 Playgrounds or Xcode and expect to fix minor build issues, especially around
 the `supabase-swift` package version (its API moves between releases).
 
+Billing (`Billing/StoreKitManager.swift`, `PaywallGateView`) is equally
+unverified, and untested for a reason beyond the usual toolchain gap: there
+was no way to generate an Xcode StoreKit Testing configuration file (the
+usual way to try a purchase flow in the simulator without live App Store
+Connect products) without Xcode itself. Test this one first, with a Sandbox
+tester account, once you have a toolchain — see "Setup" below and
+drinkmatch-backend's README "Billing".
+
 ## Setup
 
 1. Follow drinkmatch-backend's README to provision a Supabase project and
@@ -39,6 +47,16 @@ the `supabase-swift` package version (its API moves between releases).
    Signing & Capabilities > + Capability > Sign in with Apple.
 5. Build and run. First launch: Sign in with Apple → profile setup →
    schedule setup → main board.
+6. For the "新しい人と探す" paywall to show a real price and accept
+   purchases: sign the Paid Applications Agreement in App Store Connect,
+   then create an auto-renewable subscription product there with an ID
+   matching `subscriptionProductID` in
+   `Sources/AppModule/Data/ReferenceData.swift`. See drinkmatch-backend's
+   README "Billing" for the server side (`verify-purchase` /
+   `app-store-notifications` Edge Functions) that has to be deployed for a
+   purchase to actually stick — without it, `PaywallGateView` will show the
+   real price and let a purchase go through in Sandbox, but `isSubscribed`
+   will never flip because nothing is verifying/recording it server-side.
 
 ## Architecture
 
@@ -50,7 +68,15 @@ the `supabase-swift` package version (its API moves between releases).
   SQL `time`, and backend error-code matching).
 - `Sources/AppModule/Store/AppStore.swift` — `@MainActor @Observable` app
   state and the async operations views call; owns auth session tracking via
-  `SupabaseManager.client.auth.authStateChanges`.
+  `SupabaseManager.client.auth.authStateChanges`, and (started as a second,
+  independent `.task` from RootView) a `Transaction.updates` loop that keeps
+  subscription state in sync with StoreKit.
+- `Sources/AppModule/Billing/StoreKitManager.swift` — the StoreKit 2 side of
+  purchasing/restoring the subscription; `AppStore` owns the resulting state
+  and calls `SupabaseRepository.verifyPurchase` to have
+  drinkmatch-backend's `verify-purchase` Edge Function confirm the purchase
+  before `isSubscribed` actually flips (StoreKit alone can't be trusted for
+  that — see drinkmatch-backend's README "Billing").
 - `Sources/AppModule/Screens/`, `Components/` — unchanged in structure from
   the original mock-data build; several were adjusted where the real
   backend's privacy/authorization model didn't match the prototype's looser
@@ -89,12 +115,14 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   server-side (`is_blocked`, see drinkmatch-backend's README "Report/block").
   Blocked users are managed from MainView's overflow menu →
   "ブロック中のユーザー" (`BlockedUsersView`), which can unblock.
+- **The "(デモ)購入して新しい人と探す" button is gone.** `PaywallGateView`
+  now shows the subscription's real StoreKit price and does a real
+  purchase, verified server-side (see "Architecture" above) — plus a
+  "購入を復元" restore-purchases button, required by App Store guidelines
+  for any subscription.
 
 ## Not done yet
 
-- StoreKit 2 purchase flow + the App Store Server Notifications webhook —
-  "(デモ)購入して新しい人と探す" still just flips a local flag and doesn't
-  persist (see drinkmatch-backend's README "Billing").
 - APNs push delivery — notifications only show in-app.
 - Age/alcohol-guideline confirmation at signup.
 - Editing your own airline/years-of-service/note — the onboarding form never

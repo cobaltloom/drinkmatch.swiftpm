@@ -12,6 +12,12 @@ import Foundation
 /// certain to be rejected).
 let maxReferralCodesPerUser = 3
 
+/// The auto-renewable subscription unlocking "新しい人と探す" (stranger
+/// matching). Must match a product ID actually created in App Store
+/// Connect — see drinkmatch-backend's README "Billing" for the server side
+/// that verifies purchases of this product.
+let subscriptionProductID = "com.translate5jp.drinkmatch.standard.monthly"
+
 enum Roles {
     static let all: [Role] = [
         Role(code: "CPT", label: "機長"),

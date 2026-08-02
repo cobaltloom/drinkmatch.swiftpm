@@ -35,6 +35,7 @@ struct RootView: View {
         }
         .preferredColorScheme(.dark)
         .task { await store.bootstrap() }
+        .task { await store.observeTransactionUpdates() }
         .alert(
             "エラー",
             isPresented: Binding(get: { store.lastErrorMessage != nil }, set: { if !$0 { store.lastErrorMessage = nil } }),
