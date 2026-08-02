@@ -57,14 +57,7 @@ drinkmatch-backend's README "Billing".
    purchase to actually stick — without it, `PaywallGateView` will show the
    real price and let a purchase go through in Sandbox, but `isSubscribed`
    will never flip because nothing is verifying/recording it server-side.
-7. For push notifications to actually arrive: enable the **Push
-   Notifications** capability (Xcode: Target > Signing & Capabilities > +
-   Capability > Push Notifications — check whether Swift Playgrounds
-   exposes this the same way it doesn't for Sign in with Apple above), and
-   deploy + configure drinkmatch-backend's `deliver-push-notification`
-   function per its README "Push notifications". Without that, permission
-   requests and device-token registration still work, but nothing is
-   listening on the other end to actually send anything.
+7. Push notifications are on hold — see "Not done yet".
 
 ## Architecture
 
@@ -90,7 +83,8 @@ drinkmatch-backend's README "Billing".
   `didRegisterForRemoteNotificationsWithDeviceToken` — SwiftUI's App
   protocol has no equivalent) and `PushNotificationManager.swift` (turns
   the resulting token into what `AppStore.enablePushNotifications` sends to
-  drinkmatch-backend).
+  drinkmatch-backend). Built but not currently wired up to any view — see
+  "Not done yet".
 - `Sources/AppModule/Screens/`, `Components/` — unchanged in structure from
   the original mock-data build; several were adjusted where the real
   backend's privacy/authorization model didn't match the prototype's looser
@@ -149,18 +143,23 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   somehow wasn't. This is Japan's legal drinking age (20), not the general
   age of majority (18 since 2022) — see drinkmatch-backend's README
   "Age/alcohol-guideline confirmation".
-- **Push notifications.** `MainView` now requests permission and registers
-  the device token every time it appears (harmless no-op once already
-  granted/registered) — `Notifications/AppDelegate.swift` bridges UIKit's
-  `didRegisterForRemoteNotificationsWithDeviceToken` into SwiftUI (there's
-  no App-protocol equivalent), `PushNotificationManager` turns the token
-  into the hex string `push_tokens` expects, and `AppStore.enablePushNotifications`
-  writes it via `SupabaseRepository.registerPushToken`. Actual delivery is
-  drinkmatch-backend's `deliver-push-notification` Edge Function — see its
-  README "Push notifications".
 
 ## Not done yet
 
+- **Push notifications — implemented but disabled.**
+  `Notifications/AppDelegate.swift` + `PushNotificationManager.swift` +
+  `AppStore.enablePushNotifications` are a complete, working device-token
+  registration path (writes to `push_tokens` via
+  `SupabaseRepository.registerPushToken`, which drinkmatch-backend's
+  `deliver-push-notification` Edge Function reads — see its README "Push
+  notifications"), but nothing calls `enablePushNotifications()` — it's
+  disabled at the one call site that used to exist in `MainView`. Reason:
+  the Push Notifications capability needs Apple's `aps-environment`
+  entitlement, which **Swift Playgrounds cannot add** (confirmed via
+  Apple's own developer forums — it requires Xcode, i.e. a Mac). This
+  project has been developed without Mac access. Re-add
+  `.task { await store.enablePushNotifications() }` to `MainView` once
+  that capability can actually be granted; nothing else needs to change.
 - Editing your own airline/years-of-service/note — the onboarding form never
   collected these, even though the backend and other users' cards support
   them.
