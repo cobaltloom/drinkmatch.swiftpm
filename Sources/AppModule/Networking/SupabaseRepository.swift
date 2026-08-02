@@ -22,6 +22,15 @@ enum SupabaseRepository {
         try await client.auth.signOut()
     }
 
+    /// Deletes the caller's auth.users row server-side, which cascades
+    /// through every table via public.users.id's own cascade (see
+    /// drinkmatch-backend's 20260801000014_account_deletion.sql). The local
+    /// session is still valid afterward until it's cleared — callers should
+    /// follow this with signOut().
+    static func deleteAccount() async throws {
+        _ = try await client.rpc("delete_own_account").execute()
+    }
+
     // MARK: - Profile
 
     static func fetchProfile(userID: UUID) async throws -> UserRow? {

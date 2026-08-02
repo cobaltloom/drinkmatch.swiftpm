@@ -6,6 +6,7 @@ struct MainView: View {
     @Bindable var store: AppStore
 
     @State private var showingBlockedUsers = false
+    @State private var showingDeleteAccount = false
 
     private var profileBinding: Binding<UserProfile> {
         Binding(
@@ -40,6 +41,7 @@ struct MainView: View {
                     Menu {
                         Button("ブロック中のユーザー") { showingBlockedUsers = true }
                         Button("サインアウト", role: .destructive) { Task { await store.signOut() } }
+                        Button("アカウントを削除", role: .destructive) { showingDeleteAccount = true }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.system(size: 14))
@@ -100,6 +102,9 @@ struct MainView: View {
         }
         .sheet(isPresented: $showingBlockedUsers) {
             BlockedUsersView(store: store)
+        }
+        .sheet(isPresented: $showingDeleteAccount) {
+            DeleteAccountView(store: store)
         }
     }
 

@@ -120,6 +120,14 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   purchase, verified server-side (see "Architecture" above) — plus a
   "購入を復元" restore-purchases button, required by App Store guidelines
   for any subscription.
+- **Account deletion** (App Store Review Guideline 5.1.1(v) — required for
+  any app with account creation): MainView's overflow menu →
+  "アカウントを削除" opens `DeleteAccountView`, a confirmation screen that
+  calls `AppStore.deleteAccount()` → drinkmatch-backend's
+  `delete_own_account()` RPC, then signs out locally (deleting the row
+  server-side doesn't itself invalidate the client's session token). See
+  drinkmatch-backend's README "Account deletion" for the cascade and a
+  couple of foreign-key bugs that fix uncovered.
 
 ## Not done yet
 
@@ -128,4 +136,3 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
 - Editing your own airline/years-of-service/note — the onboarding form never
   collected these, even though the backend and other users' cards support
   them.
-- Account deletion.

@@ -81,6 +81,23 @@ final class AppStore {
         try? await SupabaseRepository.signOut()
     }
 
+    /// Returns an error message on failure, or nil on success. Deleting
+    /// auth.users server-side doesn't itself invalidate the client's
+    /// existing session token, so this also signs out locally and resets
+    /// state to match — otherwise every subsequent call would just fail
+    /// against data that no longer exists.
+    func deleteAccount() async -> String? {
+        do {
+            try await SupabaseRepository.deleteAccount()
+        } catch {
+            return "アカウントの削除に失敗しました。しばらくしてからもう一度お試しください。"
+        }
+        try? await SupabaseRepository.signOut()
+        authUserID = nil
+        resetLocalState()
+        return nil
+    }
+
     private func resetLocalState() {
         profile = nil
         mySchedule = []
