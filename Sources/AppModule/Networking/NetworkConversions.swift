@@ -58,6 +58,7 @@ enum BackendErrorCode: String {
     case cannotReportSelf = "cannot_report_self"
     case userBlocked = "user_blocked"
     case userNotFound = "user_not_found"
+    case ageConfirmationRequired = "age_confirmation_required"
 
     /// Best-effort match against a thrown error's description — the
     /// PostgrestError message contains the RAISE EXCEPTION text verbatim.
@@ -72,5 +73,6 @@ enum BackendErrorCode: String {
         .inviteCodeNotFound, .inviteCodeAlreadyUsed, .inviteCodeSelfUse,
         .offerNotFound, .offerNotPending, .offerNotAccepted, .notAuthorized, .cannotOfferSelf,
         .cannotBlockSelf, .cannotReportSelf, .userBlocked, .userNotFound,
+        .ageConfirmationRequired,
     ]
 }

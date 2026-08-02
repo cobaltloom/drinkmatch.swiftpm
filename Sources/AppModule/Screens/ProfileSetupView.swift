@@ -3,13 +3,14 @@ import SwiftUI
 /// First-run onboarding: pick a role, base airport, name, and how that name
 /// should appear to strangers later.
 struct ProfileSetupView: View {
-    var onDone: (UserProfile) -> Void
+    var onDone: (UserProfile, Bool) -> Void
 
     @State private var role = Roles.all[2].code // CA
     @State private var base = Bases.all[0]
     @State private var fullName = ""
     @State private var displayMode: DisplayMode = .initials
     @State private var nickname = ""
+    @State private var ageConfirmed = false
 
     private var trimmedFullName: String { fullName.trimmingCharacters(in: .whitespaces) }
     private var trimmedNickname: String { nickname.trimmingCharacters(in: .whitespaces) }
@@ -22,7 +23,7 @@ struct ProfileSetupView: View {
     }
 
     private var canSubmit: Bool {
-        displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty
+        (displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty) && ageConfirmed
     }
 
     var body: some View {
@@ -98,13 +99,21 @@ struct ProfileSetupView: View {
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.fieldBorder))
                 .padding(.top, 18)
 
+                Toggle(isOn: $ageConfirmed) {
+                    Text("私は20歳以上であり、本アプリが飲酒を伴う交流の場のマッチングを目的としていることを理解しています。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.muted)
+                }
+                .toggleStyle(.checkbox)
+                .padding(.top, 18)
+
                 Button("プロフィールを作成して始める") {
                     let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname)
-                    onDone(profile)
+                    onDone(profile, ageConfirmed)
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: !canSubmit))
                 .disabled(!canSubmit)
-                .padding(.top, 20)
+                .padding(.top, 12)
 
                 Text("※知り合いマッチングは今すぐ利用できます。「新しい人と探す」機能を使う際に会社メールでの本人確認が必要になります。")
                     .font(.system(size: 11))

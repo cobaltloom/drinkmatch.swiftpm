@@ -128,11 +128,17 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   server-side doesn't itself invalidate the client's session token). See
   drinkmatch-backend's README "Account deletion" for the cascade and a
   couple of foreign-key bugs that fix uncovered.
+- **Age/alcohol-guideline confirmation.** `ProfileSetupView` now has a
+  required checkbox ("私は20歳以上であり…") that must be checked before
+  "プロフィールを作成して始める" enables — `create_profile`'s new required
+  `p_age_confirmed` parameter rejects the call server-side even if it
+  somehow wasn't. This is Japan's legal drinking age (20), not the general
+  age of majority (18 since 2022) — see drinkmatch-backend's README
+  "Age/alcohol-guideline confirmation".
 
 ## Not done yet
 
 - APNs push delivery — notifications only show in-app.
-- Age/alcohol-guideline confirmation at signup.
 - Editing your own airline/years-of-service/note — the onboarding form never
   collected these, even though the backend and other users' cards support
   them.

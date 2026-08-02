@@ -19,7 +19,9 @@ struct RootView: View {
             } else {
                 switch store.screen {
                 case .profile:
-                    ProfileSetupView(onDone: { profile in Task { await store.completeProfile(profile) } })
+                    ProfileSetupView(onDone: { profile, ageConfirmed in
+                        Task { await store.completeProfile(profile, ageConfirmed: ageConfirmed) }
+                    })
                 case .schedule:
                     ScheduleSetupView(
                         friends: store.friends,

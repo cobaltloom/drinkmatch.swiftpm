@@ -11,6 +11,7 @@ struct CreateProfileParams: Encodable {
     var role: String
     var baseAirport: String
     var fullName: String
+    var ageConfirmed: Bool
     var airline: String?
     var yearsOfService: Int?
     var note: String?
@@ -21,6 +22,7 @@ struct CreateProfileParams: Encodable {
         case role = "p_role"
         case baseAirport = "p_base_airport"
         case fullName = "p_full_name"
+        case ageConfirmed = "p_age_confirmed"
         case airline = "p_airline"
         case yearsOfService = "p_years_of_service"
         case note = "p_note"

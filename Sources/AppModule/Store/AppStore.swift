@@ -134,11 +134,12 @@ final class AppStore {
 
     // MARK: - Onboarding
 
-    func completeProfile(_ input: UserProfile) async {
+    func completeProfile(_ input: UserProfile, ageConfirmed: Bool) async {
         let params = CreateProfileParams(
             role: input.role,
             baseAirport: input.base,
             fullName: input.fullName,
+            ageConfirmed: ageConfirmed,
             airline: nil,
             yearsOfService: nil,
             note: nil,
