@@ -236,6 +236,22 @@ final class AppStore {
         try? await SupabaseRepository.markAllNotificationsRead(userID: userID)
     }
 
+    /// Requests permission and, if granted, registers the resulting device
+    /// token server-side. Safe to call every time MainView appears — a
+    /// denied/no-op request is cheap, and a granted one just re-registers
+    /// the same token, which upserts (see SupabaseRepository.registerPushToken).
+    func enablePushNotifications() async {
+        PushNotificationManager.configure { [weak self] token in
+            Task { await self?.registerPushToken(token) }
+        }
+        await PushNotificationManager.requestAuthorization()
+    }
+
+    private func registerPushToken(_ token: String) async {
+        guard let userID = authUserID else { return }
+        try? await SupabaseRepository.registerPushToken(userID: userID, token: token)
+    }
+
     // MARK: - Verification / referral codes / billing
 
     func verifyEmail(_ email: String) async -> Bool {

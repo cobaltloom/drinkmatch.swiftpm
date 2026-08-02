@@ -347,4 +347,17 @@ enum SupabaseRepository {
             .eq("read", value: false)
             .execute()
     }
+
+    // MARK: - Push notifications
+
+    /// `push_tokens` is fully self-managed by the client (see its
+    /// `push_tokens_owner_all` RLS policy — no RPC needed). Upserts on the
+    /// table's `unique (platform, token)` constraint so re-registering the
+    /// same device (reinstall, or a different account signing in on it)
+    /// updates `user_id` instead of erroring.
+    static func registerPushToken(userID: UUID, token: String) async throws {
+        _ = try await client.from("push_tokens")
+            .upsert(PushTokenInsert(userId: userID, platform: "ios", token: token), onConflict: "platform,token")
+            .execute()
+    }
 }

@@ -431,3 +431,13 @@ struct PassedCandidateInsert: Encodable {
 struct ReadFlagUpdate: Encodable {
     var read: Bool
 }
+
+struct PushTokenInsert: Encodable {
+    var userId: UUID
+    var platform: String
+    var token: String
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case platform, token
+    }
+}

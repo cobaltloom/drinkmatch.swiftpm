@@ -100,6 +100,9 @@ struct MainView: View {
             await store.loadNotifications()
             if store.isVerified { await store.loadMyReferralCodes() }
         }
+        .task {
+            await store.enablePushNotifications()
+        }
         .sheet(isPresented: $showingBlockedUsers) {
             BlockedUsersView(store: store)
         }
