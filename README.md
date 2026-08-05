@@ -7,21 +7,29 @@ Supabase project.
 
 ## Status
 
-Full UI is wired to real network calls (`Sources/AppModule/Networking`,
-`Sources/AppModule/Store/AppStore.swift`) against the Supabase schema/RPCs in
-drinkmatch-backend. This has **not** been compiled or run against a live
-project — this repo was built in a Linux sandbox with no Xcode/Swift
-toolchain and no live Supabase project to test against. Open it in Swift
-Playgrounds or Xcode and expect to fix minor build issues, especially around
-the `supabase-swift` package version (its API moves between releases).
+Full UI is wired to real network calls against the Supabase schema/RPCs in
+drinkmatch-backend. Being tested live (iPad + Swift Playgrounds, no Mac)
+against a real Supabase project as of this writing — early screens work;
+expect the rest to surface real issues as testing continues, same as any
+codebase whose first compile happens this late.
 
-Billing (`Billing/StoreKitManager.swift`, `PaywallGateView`) is equally
-unverified, and untested for a reason beyond the usual toolchain gap: there
-was no way to generate an Xcode StoreKit Testing configuration file (the
-usual way to try a purchase flow in the simulator without live App Store
-Connect products) without Xcode itself. Test this one first, with a Sandbox
-tester account, once you have a toolchain — see "Setup" below and
-drinkmatch-backend's README "Billing".
+**This does not use the official `supabase-swift` SDK.** It was tried
+first and turned out to be impossible to build in Swift Playgrounds: the
+SDK depends transitively on `swift-crypto`, which has C-language targets
+(`CCryptoBoringSSL`, `CXKCP`), and Swift Playgrounds categorically refuses
+to build any SPM package containing a C/C++/Objective-C target — confirmed
+via Apple's own developer forums, a hard platform limitation with no
+workaround short of Xcode. `Sources/AppModule/Networking/` instead talks to
+Supabase's REST APIs (PostgREST, GoTrue, Edge Functions) directly over
+`URLSession` — see "Architecture" below. `RestClient.swift`'s header
+comment has the full explanation.
+
+Billing (`Billing/StoreKitManager.swift`, `PaywallGateView`) has the same
+untested status, plus a StoreKit-specific gap: there was no way to generate
+an Xcode StoreKit Testing configuration file (the usual way to try a
+purchase flow in the simulator without live App Store Connect products)
+without Xcode itself. Test this one with a Sandbox tester account — see
+"Setup" below and drinkmatch-backend's README "Billing".
 
 ## Setup
 
@@ -61,17 +69,38 @@ drinkmatch-backend's README "Billing".
 
 ## Architecture
 
-- `Sources/AppModule/Networking/` — `SupabaseConfig`/`SupabaseManager` (the
-  shared client), `DTOs.swift` (request/response types — see its header
-  comment on why every field has an explicit `CodingKeys`, not automatic
-  snake_case conversion), `SupabaseRepository.swift` (all actual network
-  calls), `NetworkConversions.swift` (day-of-month ↔ SQL `date`, "HH:mm" ↔
-  SQL `time`, and backend error-code matching).
+- `Sources/AppModule/Networking/` — no `supabase-swift` SDK (see "Status");
+  everything talks to Supabase's plain REST APIs via `URLSession`:
+  - `SupabaseConfig.swift` — project URL + publishable key.
+  - `RestClient.swift` — the raw HTTP layer (headers, error decoding, the
+    `eq`/`inList` PostgREST filter-query-item helpers). Its header comment
+    explains why this exists instead of the SDK.
+  - `PostgREST.swift` — table (select/insert/update/delete/upsert) and RPC
+    helpers built on RestClient, covering every shape SupabaseRepository
+    needs, plus Edge Function invocation.
+  - `AuthSessionData.swift` / `KeychainStore.swift` / `AuthManager.swift` —
+    the hand-rolled equivalent of the SDK's session management: persists
+    the session in the Keychain between launches, and — as an `actor`,
+    specifically to serialize concurrent callers — refreshes the access
+    token before it expires. Supabase's refresh tokens rotate on every use,
+    so two callers racing to refresh at once would have the second one fail
+    against an already-invalidated token; the actor collapses concurrent
+    refreshes into one in-flight request everyone awaits instead.
+  - `DTOs.swift` (request/response types — see its header comment on why
+    every field has an explicit `CodingKeys`, not automatic snake_case
+    conversion — this predates the SDK removal but the reasoning holds
+    regardless: PostgREST speaks the database's actual snake_case column
+    names on the wire either way), `SupabaseRepository.swift` (all actual
+    network calls — same public API before and after the SDK was removed,
+    so nothing outside this folder changed), `NetworkConversions.swift`
+    (day-of-month ↔ SQL `date`, "HH:mm" ↔ SQL `time`, and backend
+    error-code matching).
 - `Sources/AppModule/Store/AppStore.swift` — `@MainActor @Observable` app
-  state and the async operations views call; owns auth session tracking via
-  `SupabaseManager.client.auth.authStateChanges`, and (started as a second,
-  independent `.task` from RootView) a `Transaction.updates` loop that keeps
-  subscription state in sync with StoreKit.
+  state and the async operations views call; checks for a persisted session
+  at launch (`bootstrap()`) rather than listening to a continuous
+  auth-state stream (there isn't one without the SDK), and (started as a
+  second, independent `.task` from RootView) runs a `Transaction.updates`
+  loop that keeps subscription state in sync with StoreKit.
 - `Sources/AppModule/Billing/StoreKitManager.swift` — the StoreKit 2 side of
   purchasing/restoring the subscription; `AppStore` owns the resulting state
   and calls `SupabaseRepository.verifyPurchase` to have

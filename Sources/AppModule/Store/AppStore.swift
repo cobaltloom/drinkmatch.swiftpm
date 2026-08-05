@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 import StoreKit
-import Supabase
 
 /// Single source of truth for the app, backed by the drinkmatch-backend
 /// Supabase project. Network I/O + DTO mapping lives in SupabaseRepository;
@@ -48,30 +47,24 @@ final class AppStore {
 
     // MARK: - Auth / bootstrap
 
-    /// Runs for the lifetime of the app: performs the initial session check
-    /// (via the `.initialSession` event) and keeps reacting to sign-in/out.
+    /// Checks for a session persisted from a previous launch (see
+    /// AuthManager/KeychainStore) — there's no continuous auth-state stream
+    /// to listen to now that this talks to Supabase's REST APIs directly
+    /// (see RestClient's header comment), so sign-in/out below update
+    /// `authUserID` themselves instead of relying on one.
     func bootstrap() async {
-        for await (event, session) in SupabaseManager.client.auth.authStateChanges {
-            switch event {
-            case .initialSession, .signedIn, .tokenRefreshed:
-                if let session {
-                    authUserID = session.user.id
-                    await loadAfterSignIn(userID: session.user.id)
-                }
-            case .signedOut:
-                authUserID = nil
-                resetLocalState()
-            default:
-                break
-            }
-            isBootstrapping = false
+        if let userID = await AuthManager.shared.currentUserID {
+            authUserID = userID
+            await loadAfterSignIn(userID: userID)
         }
+        isBootstrapping = false
     }
 
     func signInWithApple(idToken: String) async {
         do {
-            _ = try await SupabaseRepository.signInWithApple(idToken: idToken)
-            // authStateChanges (above) picks up the new session from here.
+            let userID = try await SupabaseRepository.signInWithApple(idToken: idToken)
+            authUserID = userID
+            await loadAfterSignIn(userID: userID)
         } catch {
             lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
         }
@@ -79,6 +72,8 @@ final class AppStore {
 
     func signOut() async {
         try? await SupabaseRepository.signOut()
+        authUserID = nil
+        resetLocalState()
     }
 
     /// Returns an error message on failure, or nil on success. Deleting

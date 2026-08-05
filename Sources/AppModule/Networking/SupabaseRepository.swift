@@ -1,5 +1,4 @@
 import Foundation
-import Supabase
 
 /// All network I/O + DTO<->domain mapping lives here so AppStore stays
 /// focused on app state. Every function that touches a table relying on a
@@ -8,18 +7,21 @@ import Supabase
 /// select without an extra filter — RLS already scopes the result set to
 /// rows the signed-in user is allowed to see (see drinkmatch-backend's
 /// supabase/migrations/20260801000007_rls.sql).
+///
+/// Talks to Supabase's REST APIs directly via PostgREST.swift/RestClient.swift
+/// rather than the official supabase-swift SDK — see RestClient's header
+/// comment for why (the SDK can't be built in Swift Playgrounds). Every
+/// function here has the exact same signature it had when this called the
+/// SDK, so nothing above this file (AppStore, any view) needed to change.
 enum SupabaseRepository {
-    private static var client: SupabaseClient { SupabaseManager.client }
-
     // MARK: - Auth
 
     static func signInWithApple(idToken: String) async throws -> UUID {
-        let session = try await client.auth.signInWithIdToken(credentials: .init(provider: .apple, idToken: idToken))
-        return session.user.id
+        try await AuthManager.shared.signInWithApple(idToken: idToken)
     }
 
     static func signOut() async throws {
-        try await client.auth.signOut()
+        try await AuthManager.shared.signOut()
     }
 
     /// Deletes the caller's auth.users row server-side, which cascades
@@ -28,28 +30,28 @@ enum SupabaseRepository {
     /// session is still valid afterward until it's cleared — callers should
     /// follow this with signOut().
     static func deleteAccount() async throws {
-        _ = try await client.rpc("delete_own_account").execute()
+        try await PostgREST.rpcVoid("delete_own_account")
     }
 
     // MARK: - Profile
 
     static func fetchProfile(userID: UUID) async throws -> UserRow? {
-        let rows: [UserRow] = try await client.from("users")
-            .select("id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed")
-            .eq("id", value: userID)
-            .limit(1)
-            .execute()
-            .value
+        let rows: [UserRow] = try await PostgREST.select(
+            "users",
+            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed",
+            filters: [RestClient.eq("id", userID)],
+            limit: 1
+        )
         return rows.first
     }
 
     static func createProfile(_ params: CreateProfileParams) async throws -> UserRow {
-        try await client.rpc("create_profile", params: params).execute().value
+        try await PostgREST.rpc("create_profile", params: params)
     }
 
     static func updateRole(userID: UUID, role: String) async throws {
         struct Patch: Encodable { var role: String }
-        _ = try await client.from("users").update(Patch(role: role)).eq("id", value: userID).execute()
+        try await PostgREST.update("users", Patch(role: role), filters: [RestClient.eq("id", userID)])
     }
 
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {
@@ -59,18 +61,18 @@ enum SupabaseRepository {
             enum CodingKeys: String, CodingKey { case displayMode = "display_mode", nickname }
         }
         let patch = Patch(displayMode: displayMode.rawValue, nickname: nickname.isEmpty ? nil : nickname)
-        _ = try await client.from("users").update(patch).eq("id", value: userID).execute()
+        try await PostgREST.update("users", patch, filters: [RestClient.eq("id", userID)])
     }
 
     // MARK: - Schedule
 
     static func fetchSchedule(userID: UUID) async throws -> [ScheduleEntryRow] {
-        try await client.from("schedule_entries")
-            .select("id,day,airport_code,available_from")
-            .eq("user_id", value: userID)
-            .order("day", ascending: true)
-            .execute()
-            .value
+        try await PostgREST.select(
+            "schedule_entries",
+            columns: "id,day,airport_code,available_from",
+            filters: [RestClient.eq("user_id", userID)],
+            order: "day.asc"
+        )
     }
 
     static func fetchHiddenFrom(entryIDs: [UUID]) async throws -> [UUID: [UUID]] {
@@ -83,11 +85,11 @@ enum SupabaseRepository {
                 case hiddenFromUserId = "hidden_from_user_id"
             }
         }
-        let rows: [Row] = try await client.from("schedule_visibility_exceptions")
-            .select("schedule_entry_id,hidden_from_user_id")
-            .in("schedule_entry_id", values: entryIDs)
-            .execute()
-            .value
+        let rows: [Row] = try await PostgREST.select(
+            "schedule_visibility_exceptions",
+            columns: "schedule_entry_id,hidden_from_user_id",
+            filters: [RestClient.inList("schedule_entry_id", entryIDs.map(\.uuidString))]
+        )
         return Dictionary(grouping: rows, by: \.scheduleEntryId).mapValues { $0.map(\.hiddenFromUserId) }
     }
 
@@ -101,75 +103,65 @@ enum SupabaseRepository {
             airportCode: location,
             availableFrom: postgresTimeString(fromClientTime: from)
         )
-        let row: ScheduleEntryRow = try await client.from("schedule_entries")
-            .upsert(payload, onConflict: "user_id,day")
-            .select("id,day,airport_code,available_from")
-            .single()
-            .execute()
-            .value
+        let row: ScheduleEntryRow = try await PostgREST.upsertReturningFirst(
+            "schedule_entries", payload, onConflict: "user_id,day", select: "id,day,airport_code,available_from"
+        )
 
-        _ = try await client.from("schedule_visibility_exceptions")
-            .delete()
-            .eq("schedule_entry_id", value: row.id)
-            .execute()
+        try await PostgREST.delete("schedule_visibility_exceptions", filters: [RestClient.eq("schedule_entry_id", row.id)])
         if !hiddenFrom.isEmpty {
             let inserts = hiddenFrom.map { VisibilityExceptionInsert(scheduleEntryId: row.id, hiddenFromUserId: $0) }
-            _ = try await client.from("schedule_visibility_exceptions").insert(inserts).execute()
+            try await PostgREST.insert("schedule_visibility_exceptions", inserts)
         }
         return row.id
     }
 
     static func deleteScheduleEntry(id: UUID) async throws {
-        _ = try await client.from("schedule_entries").delete().eq("id", value: id).execute()
+        try await PostgREST.delete("schedule_entries", filters: [RestClient.eq("id", id)])
     }
 
     // MARK: - Verification / referral codes
 
     static func verifyEmailDomain(email: String) async throws -> Bool {
-        try await client.rpc("verify_email_domain", params: EmailParams(email: email)).execute().value
+        try await PostgREST.rpc("verify_email_domain", params: EmailParams(email: email))
     }
 
     static func issueReferralCode() async throws -> String {
-        try await client.rpc("issue_referral_code").execute().value
+        try await PostgREST.rpc("issue_referral_code")
     }
 
     static func redeemReferralCode(code: String) async throws {
-        _ = try await client.rpc("redeem_referral_code", params: CodeParams(code: code)).execute()
+        try await PostgREST.rpcVoid("redeem_referral_code", params: CodeParams(code: code))
     }
 
     static func fetchMyReferralCodes(userID: UUID) async throws -> [(code: String, used: Bool)] {
         struct Row: Decodable { var code: String; var used: Bool }
-        let rows: [Row] = try await client.from("referral_codes")
-            .select("code,used")
-            .eq("issued_by_user_id", value: userID)
-            .order("created_at", ascending: true)
-            .execute()
-            .value
+        let rows: [Row] = try await PostgREST.select(
+            "referral_codes", columns: "code,used",
+            filters: [RestClient.eq("issued_by_user_id", userID)], order: "created_at.asc"
+        )
         return rows.map { (code: $0.code, used: $0.used) }
     }
 
     // MARK: - Friends
 
     static func issueInviteCode() async throws -> String {
-        try await client.rpc("issue_invite_code").execute().value
+        try await PostgREST.rpc("issue_invite_code")
     }
 
     static func redeemInviteCode(code: String) async throws {
-        _ = try await client.rpc("redeem_invite_code", params: CodeParams(code: code)).execute()
+        try await PostgREST.rpcVoid("redeem_invite_code", params: CodeParams(code: code))
     }
 
     static func fetchFriendsWithOverlap() async throws -> [FriendOverlapRow] {
-        try await client.rpc("list_friends_with_overlap").execute().value
+        try await PostgREST.rpc("list_friends_with_overlap")
     }
 
     static func fetchMyInviteCodes(userID: UUID) async throws -> [(code: String, used: Bool)] {
         struct Row: Decodable { var code: String; var used: Bool }
-        let rows: [Row] = try await client.from("invite_codes")
-            .select("code,used")
-            .eq("owner_user_id", value: userID)
-            .order("created_at", ascending: true)
-            .execute()
-            .value
+        let rows: [Row] = try await PostgREST.select(
+            "invite_codes", columns: "code,used",
+            filters: [RestClient.eq("owner_user_id", userID)], order: "created_at.asc"
+        )
         return rows.map { (code: $0.code, used: $0.used) }
     }
 
@@ -180,21 +172,17 @@ enum SupabaseRepository {
             baseAirport: (baseAirport == "ALL" ? nil : baseAirport),
             role: (role == "ALL" ? nil : role)
         )
-        return try await client.rpc("search_stranger_candidates", params: params).execute().value
+        return try await PostgREST.rpc("search_stranger_candidates", params: params)
     }
 
     static func passCandidate(userID: UUID, candidateID: UUID) async throws {
-        _ = try await client.from("passed_candidates")
-            .insert(PassedCandidateInsert(userId: userID, candidateUserId: candidateID))
-            .execute()
+        try await PostgREST.insert("passed_candidates", PassedCandidateInsert(userId: userID, candidateUserId: candidateID))
     }
 
     // MARK: - Overlap
 
     static func fetchOverlap(otherUserID: UUID) async throws -> [StayOverlap] {
-        let rows: [MatchOverlapRow] = try await client.rpc("get_match_overlap", params: OtherUserParams(otherUserId: otherUserID))
-            .execute()
-            .value
+        let rows: [MatchOverlapRow] = try await PostgREST.rpc("get_match_overlap", params: OtherUserParams(otherUserId: otherUserID))
         return rows.compactMap { row in
             guard let day = dayOfMonth(fromPostgresDate: row.day) else { return nil }
             return StayOverlap(
@@ -209,23 +197,20 @@ enum SupabaseRepository {
     // MARK: - Offers
 
     static func fetchMyOffers() async throws -> [OfferRow] {
-        try await client.from("offers")
-            .select("id,from_user_id,to_user_id,day,airport_code,auto_accept,status")
-            .execute()
-            .value
+        try await PostgREST.select("offers", columns: "id,from_user_id,to_user_id,day,airport_code,auto_accept,status")
     }
 
     static func createOffer(toUserID: UUID, day: Int, location: String, autoAccept: Bool) async throws -> UUID {
         let params = CreateOfferParams(toUserId: toUserID, day: postgresDateString(forDay: day), airportCode: location, autoAccept: autoAccept)
-        return try await client.rpc("create_offer", params: params).execute().value
+        return try await PostgREST.rpc("create_offer", params: params)
     }
 
     static func acceptOffer(offerID: UUID) async throws {
-        _ = try await client.rpc("accept_offer", params: OfferIDParams(offerId: offerID)).execute()
+        try await PostgREST.rpcVoid("accept_offer", params: OfferIDParams(offerId: offerID))
     }
 
     static func fetchOfferCounterpart(offerID: UUID) async throws -> OfferCounterpartRow? {
-        let rows: [OfferCounterpartRow] = try await client.rpc("get_offer_counterpart", params: OfferIDParams(offerId: offerID)).execute().value
+        let rows: [OfferCounterpartRow] = try await PostgREST.rpc("get_offer_counterpart", params: OfferIDParams(offerId: offerID))
         return rows.first
     }
 
@@ -233,29 +218,26 @@ enum SupabaseRepository {
     /// tappable days in the client's ReadOnlyStayCalendar) — only callable
     /// once accepted, and already excludes days the partner hid from us.
     static func fetchMatchCalendar(offerID: UUID) async throws -> [ScheduleEntryRow] {
-        try await client.rpc("get_match_calendar", params: OfferIDParams(offerId: offerID)).execute().value
+        try await PostgREST.rpc("get_match_calendar", params: OfferIDParams(offerId: offerID))
     }
 
     // MARK: - Group offers
 
     static func fetchMyGroups() async throws -> [GroupOfferRow] {
-        try await client.from("group_offers")
-            .select("id,day,airport_code,created_by_user_id")
-            .execute()
-            .value
+        try await PostgREST.select("group_offers", columns: "id,day,airport_code,created_by_user_id")
     }
 
     static func createGroupOffer(day: Int, location: String, memberIDs: [UUID], autoAccept: Bool) async throws -> UUID {
         let params = CreateGroupOfferParams(day: postgresDateString(forDay: day), airportCode: location, memberIds: memberIDs, autoAccept: autoAccept)
-        return try await client.rpc("create_group_offer", params: params).execute().value
+        return try await PostgREST.rpc("create_group_offer", params: params)
     }
 
     static func acceptGroupOfferMembership(groupOfferID: UUID) async throws {
-        _ = try await client.rpc("accept_group_offer_membership", params: GroupOfferIDParams(groupOfferId: groupOfferID)).execute()
+        try await PostgREST.rpcVoid("accept_group_offer_membership", params: GroupOfferIDParams(groupOfferId: groupOfferID))
     }
 
     static func fetchGroupMembersInfo(groupOfferID: UUID) async throws -> [GroupMemberInfoRow] {
-        try await client.rpc("get_group_offer_members_info", params: GroupOfferIDParams(groupOfferId: groupOfferID)).execute().value
+        try await PostgREST.rpc("get_group_offer_members_info", params: GroupOfferIDParams(groupOfferId: groupOfferID))
     }
 
     // MARK: - Proposals
@@ -269,26 +251,22 @@ enum SupabaseRepository {
             offerId: offerID,
             groupOfferId: groupOfferID
         )
-        return try await client.rpc("send_proposal", params: params).execute().value
+        return try await PostgREST.rpc("send_proposal", params: params)
     }
 
     static func fetchProposal(offerID: UUID) async throws -> ProposalRow? {
-        let rows: [ProposalRow] = try await client.from("proposals")
-            .select("id,offer_id,group_offer_id,day,airport_code,meeting_time,place")
-            .eq("offer_id", value: offerID)
-            .limit(1)
-            .execute()
-            .value
+        let rows: [ProposalRow] = try await PostgREST.select(
+            "proposals", columns: "id,offer_id,group_offer_id,day,airport_code,meeting_time,place",
+            filters: [RestClient.eq("offer_id", offerID)], limit: 1
+        )
         return rows.first
     }
 
     static func fetchProposal(groupOfferID: UUID) async throws -> ProposalRow? {
-        let rows: [ProposalRow] = try await client.from("proposals")
-            .select("id,offer_id,group_offer_id,day,airport_code,meeting_time,place")
-            .eq("group_offer_id", value: groupOfferID)
-            .limit(1)
-            .execute()
-            .value
+        let rows: [ProposalRow] = try await PostgREST.select(
+            "proposals", columns: "id,offer_id,group_offer_id,day,airport_code,meeting_time,place",
+            filters: [RestClient.eq("group_offer_id", groupOfferID)], limit: 1
+        )
         return rows.first
     }
 
@@ -298,24 +276,21 @@ enum SupabaseRepository {
     /// a local StoreKit 2 purchase, so the caller unlocks stranger-matching
     /// immediately instead of waiting on Apple's async server notification.
     static func verifyPurchase(transactionJWS: String) async throws {
-        try await client.functions.invoke(
-            "verify-purchase",
-            options: FunctionInvokeOptions(body: VerifyPurchaseBody(transactionJWS: transactionJWS))
-        )
+        try await PostgREST.invokeFunction("verify-purchase", body: VerifyPurchaseBody(transactionJWS: transactionJWS))
     }
 
     // MARK: - Report / block
 
     static func blockUser(userID: UUID) async throws {
-        _ = try await client.rpc("block_user", params: BlockUserParams(userId: userID)).execute()
+        try await PostgREST.rpcVoid("block_user", params: BlockUserParams(userId: userID))
     }
 
     static func unblockUser(userID: UUID) async throws {
-        _ = try await client.rpc("unblock_user", params: BlockUserParams(userId: userID)).execute()
+        try await PostgREST.rpcVoid("unblock_user", params: BlockUserParams(userId: userID))
     }
 
     static func fetchBlockedUsers() async throws -> [BlockedUserRow] {
-        try await client.rpc("list_blocked_users").execute().value
+        try await PostgREST.rpc("list_blocked_users")
     }
 
     @discardableResult
@@ -327,25 +302,20 @@ enum SupabaseRepository {
             offerId: offerID,
             groupOfferId: groupOfferID
         )
-        return try await client.rpc("submit_report", params: params).execute().value
+        return try await PostgREST.rpc("submit_report", params: params)
     }
 
     // MARK: - Notifications
 
     static func fetchNotifications() async throws -> [NotificationRow] {
-        try await client.from("notifications")
-            .select("id,type,body,read")
-            .order("created_at", ascending: false)
-            .execute()
-            .value
+        try await PostgREST.select("notifications", columns: "id,type,body,read", order: "created_at.desc")
     }
 
     static func markAllNotificationsRead(userID: UUID) async throws {
-        _ = try await client.from("notifications")
-            .update(ReadFlagUpdate(read: true))
-            .eq("user_id", value: userID)
-            .eq("read", value: false)
-            .execute()
+        try await PostgREST.update(
+            "notifications", ReadFlagUpdate(read: true),
+            filters: [RestClient.eq("user_id", userID), RestClient.eq("read", false)]
+        )
     }
 
     // MARK: - Push notifications
@@ -356,8 +326,6 @@ enum SupabaseRepository {
     /// same device (reinstall, or a different account signing in on it)
     /// updates `user_id` instead of erroring.
     static func registerPushToken(userID: UUID, token: String) async throws {
-        _ = try await client.from("push_tokens")
-            .upsert(PushTokenInsert(userId: userID, platform: "ios", token: token), onConflict: "platform,token")
-            .execute()
+        try await PostgREST.upsert("push_tokens", PushTokenInsert(userId: userID, platform: "ios", token: token), onConflict: "platform,token")
     }
 }

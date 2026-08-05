@@ -1,13 +1,13 @@
 import Foundation
 
-/// The Supabase Swift client's default JSON encoder/decoder do NOT convert
-/// between camelCase and snake_case (verified against postgrest-swift's
-/// source), so every DTO below spells out CodingKeys explicitly rather than
-/// relying on automatic conversion. Their dateDecodingStrategy is also a
-/// custom full-ISO8601 parser, which does not accept PostgREST's plain
-/// `date` ("2026-08-06") or `time` ("19:00:00") string formats — so those
-/// columns are modeled as `String` here, not `Date`, and converted at the
-/// boundary using the helpers below.
+/// PostgREST speaks the database's actual snake_case column/RPC-parameter
+/// names on the wire, so every DTO in DTOs.swift spells out CodingKeys
+/// explicitly rather than relying on automatic camelCase conversion (Swift's
+/// JSONDecoder has no such conversion built in either way). RestClient's
+/// plain JSONDecoder also has no special date-decoding strategy, which
+/// doesn't accept PostgREST's plain `date` ("2026-08-06") or `time`
+/// ("19:00:00") string formats — so those columns are modeled as `String`
+/// here, not `Date`, and converted at the boundary using the helpers below.
 
 /// The client's schedule UI works in day-of-month integers scoped to
 /// `BoardCalendar.year`/`BoardCalendar.month` (see Data/CalendarFormatting.swift);
@@ -60,8 +60,9 @@ enum BackendErrorCode: String {
     case userNotFound = "user_not_found"
     case ageConfirmationRequired = "age_confirmation_required"
 
-    /// Best-effort match against a thrown error's description — the
-    /// PostgrestError message contains the RAISE EXCEPTION text verbatim.
+    /// Best-effort match against a thrown error's description — RestClient's
+    /// RequestError.description embeds PostgREST's JSON error body, which
+    /// contains the RAISE EXCEPTION message text verbatim.
     static func from(_ error: Error) -> BackendErrorCode? {
         let text = String(describing: error)
         return allCases.first { text.contains($0.rawValue) }

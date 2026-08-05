@@ -4,8 +4,9 @@ import Foundation
 //
 // Property names use explicit CodingKeys matching the backend's `p_`-
 // prefixed argument names exactly (drinkmatch-backend's
-// supabase/migrations/20260801000008_functions.sql) — the Supabase Swift
-// client's default encoder does not do camelCase<->snake_case conversion.
+// supabase/migrations/20260801000008_functions.sql) — plain JSONEncoder
+// does no camelCase<->snake_case conversion, and PostgREST calls Postgres
+// functions using these exact names as named parameters.
 
 struct CreateProfileParams: Encodable {
     var role: String
