@@ -6,6 +6,12 @@ struct AirportAutocompleteField: View {
     @Binding var code: String
     var placeholder: String = "空港コードまたは名前で検索(例: HND, 那覇)"
     var allowAll: Bool = false
+    /// When true, picking a suggestion records it in `AirportUsageTracker`
+    /// and the suggestion list is sorted most-picked-first — worth enabling
+    /// where the same person repeatedly picks from a real, personal set of
+    /// airports (e.g. stay locations), not for a one-off pick like a home
+    /// base or an unrelated search filter.
+    var trackUsage: Bool = false
 
     @State private var query: String = ""
     @FocusState private var focused: Bool
@@ -13,10 +19,22 @@ struct AirportAutocompleteField: View {
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
 
     private var suggestions: [Airport] {
-        guard !trimmedQuery.isEmpty else { return StayAirports.all }
-        return StayAirports.all.filter {
-            $0.code.localizedCaseInsensitiveContains(trimmedQuery) || $0.name.contains(trimmedQuery)
-        }
+        let matches = trimmedQuery.isEmpty
+            ? StayAirports.all
+            : StayAirports.all.filter {
+                $0.code.localizedCaseInsensitiveContains(trimmedQuery) || $0.name.contains(trimmedQuery)
+            }
+        guard trackUsage else { return matches }
+        // `sorted(by:)` isn't guaranteed stable, so ties (most airports,
+        // which have no recorded uses) break on original list order via the
+        // enumerated offset rather than however the sort happens to shuffle them.
+        return matches.enumerated()
+            .sorted { lhs, rhs in
+                let lhsCount = AirportUsageTracker.count(for: lhs.element.code)
+                let rhsCount = AirportUsageTracker.count(for: rhs.element.code)
+                return lhsCount != rhsCount ? lhsCount > rhsCount : lhs.offset < rhs.offset
+            }
+            .map(\.element)
     }
 
     private var showAllOption: Bool {
@@ -59,6 +77,7 @@ struct AirportAutocompleteField: View {
             code = airportCode
             query = label
             focused = false
+            if trackUsage { AirportUsageTracker.recordUse(airportCode) }
         } label: {
             HStack {
                 if let subtitle {

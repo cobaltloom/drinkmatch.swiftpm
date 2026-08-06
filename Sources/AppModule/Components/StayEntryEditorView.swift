@@ -27,31 +27,13 @@ struct StayEntryEditorView: View {
                     .foregroundStyle(Theme.amber)
                     .frame(width: 44, alignment: .leading)
 
-                Menu {
-                    ForEach(StayAirports.all) { airport in
-                        Button(airportLabel(airport.code)) { entry.location = airport.code }
-                    }
-                } label: {
-                    HStack {
-                        Text(entry.location.isEmpty ? "ステイ先を選択" : airportLabel(entry.location))
-                            .font(.system(size: 12))
-                            .foregroundStyle(entry.location.isEmpty ? Theme.faint : Theme.text)
-                            .lineLimit(1)
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(Theme.faint)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .background(Theme.field)
-                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                }
-
                 if !isAllDay {
                     DatePicker("", selection: timeBinding, displayedComponents: .hourAndMinute)
                         .labelsHidden()
                         .tint(Theme.amber)
                 }
+
+                Spacer()
 
                 Button {
                     onRemove()
@@ -63,6 +45,9 @@ struct StayEntryEditorView: View {
                         .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
                 }
             }
+
+            AirportAutocompleteField(code: $entry.location, placeholder: "ステイ先を選択(例: HND, 那覇)", trackUsage: true)
+                .padding(.top, 2)
 
             Button {
                 toggleAllDay()
