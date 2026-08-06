@@ -30,6 +30,45 @@ actor AuthManager {
         return newSession.userID
     }
 
+    /// Temporary stand-in for Sign in with Apple, which needs a paid Apple
+    /// Developer Program membership to test (the capability can't be granted
+    /// to a free account, so Swift Playgrounds device runs hit it as an
+    /// opaque auth failure). Remove once that membership is in place. Returns
+    /// nil when GoTrue requires email confirmation before a session exists.
+    func signUpWithEmail(email: String, password: String) async throws -> UUID? {
+        let data = try await RestClient.request(
+            "auth/v1/signup",
+            method: .post,
+            body: try RestClient.encode(EmailPasswordBody(email: email, password: password)),
+            authenticated: false
+        )
+        let response: SignUpResponse = try RestClient.decode(data)
+        guard let accessToken = response.accessToken,
+              let refreshToken = response.refreshToken,
+              let expiresAt = response.expiresAt,
+              let user = response.user else {
+            return nil
+        }
+        let newSession = AuthSessionData(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresAt: Date(timeIntervalSince1970: TimeInterval(expiresAt)),
+            userID: user.id
+        )
+        session = newSession
+        KeychainStore.save(newSession)
+        return newSession.userID
+    }
+
+    /// Same temporary-testing rationale as `signUpWithEmail` above.
+    func signInWithEmail(email: String, password: String) async throws -> UUID {
+        let response = try await Self.exchange(grantType: "password", body: EmailPasswordBody(email: email, password: password))
+        let newSession = Self.session(from: response)
+        session = newSession
+        KeychainStore.save(newSession)
+        return newSession.userID
+    }
+
     func signOut() async throws {
         if let token = session?.accessToken {
             try? await Self.logout(accessToken: token)
@@ -95,6 +134,28 @@ actor AuthManager {
     private struct RefreshTokenBody: Encodable {
         var refreshToken: String
         enum CodingKeys: String, CodingKey { case refreshToken = "refresh_token" }
+    }
+
+    private struct EmailPasswordBody: Encodable {
+        var email: String
+        var password: String
+    }
+
+    /// `/auth/v1/signup`'s response shape when email confirmation is
+    /// required: a user object with no session fields at all, rather than
+    /// TokenResponse's guaranteed access/refresh tokens.
+    private struct SignUpResponse: Decodable {
+        var accessToken: String?
+        var refreshToken: String?
+        var expiresAt: Int?
+        var user: TokenResponse.UserInfo?
+
+        enum CodingKeys: String, CodingKey {
+            case accessToken = "access_token"
+            case refreshToken = "refresh_token"
+            case expiresAt = "expires_at"
+            case user
+        }
     }
 
     private struct TokenResponse: Decodable {

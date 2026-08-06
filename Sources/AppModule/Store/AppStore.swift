@@ -70,6 +70,34 @@ final class AppStore {
         }
     }
 
+    /// Temporary stand-in for Sign in with Apple while that capability is
+    /// untestable without a paid Apple Developer Program membership — see
+    /// AuthManager.signUpWithEmail. Returns a status/error message to show
+    /// inline, or nil on a session-issuing success.
+    func signUpWithEmail(email: String, password: String) async -> String? {
+        do {
+            guard let userID = try await SupabaseRepository.signUpWithEmail(email: email, password: password) else {
+                return "確認メールを送信しました。メール内のリンクを開いてから「テストログイン」でサインインしてください。"
+            }
+            authUserID = userID
+            await loadAfterSignIn(userID: userID)
+            return nil
+        } catch {
+            return "登録に失敗しました: \(error)"
+        }
+    }
+
+    func signInWithEmail(email: String, password: String) async -> String? {
+        do {
+            let userID = try await SupabaseRepository.signInWithEmail(email: email, password: password)
+            authUserID = userID
+            await loadAfterSignIn(userID: userID)
+            return nil
+        } catch {
+            return "サインインに失敗しました: \(error)"
+        }
+    }
+
     func signOut() async {
         try? await SupabaseRepository.signOut()
         authUserID = nil
