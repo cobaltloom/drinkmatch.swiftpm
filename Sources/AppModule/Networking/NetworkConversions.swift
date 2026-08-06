@@ -13,7 +13,14 @@ import Foundation
 /// `BoardCalendar.year`/`BoardCalendar.month` (see Data/CalendarFormatting.swift);
 /// the backend stores a full SQL `date`. These convert between the two.
 func postgresDateString(forDay day: Int) -> String {
-    String(format: "%04d-%02d-%02d", BoardCalendar.year, BoardCalendar.month, day)
+    postgresDateString(year: BoardCalendar.year, month: BoardCalendar.month, forDay: day)
+}
+
+/// Same as `postgresDateString(forDay:)`, but for callers juggling a
+/// specific navigated month instead of the app-wide default — currently
+/// just the schedule editor (see `ScheduleSetupView`).
+func postgresDateString(year: Int, month: Int, forDay day: Int) -> String {
+    String(format: "%04d-%02d-%02d", year, month, day)
 }
 
 func dayOfMonth(fromPostgresDate iso: String) -> Int? {

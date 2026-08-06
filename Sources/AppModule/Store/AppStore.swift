@@ -15,6 +15,11 @@ final class AppStore {
 
     var profile: UserProfile?
     var mySchedule: [StayEntry] = []
+    /// Which month `mySchedule`/`scheduleEntryIDs` currently reflects —
+    /// moves together with them, whether from the initial post-sign-in load
+    /// or from the schedule editor navigating to a different month.
+    var scheduleYear = BoardCalendar.year
+    var scheduleMonth = BoardCalendar.month
     private var scheduleEntryIDs: [Int: UUID] = [:]
 
     var screen: AppScreen = .profile
@@ -124,6 +129,8 @@ final class AppStore {
     private func resetLocalState() {
         profile = nil
         mySchedule = []
+        scheduleYear = BoardCalendar.year
+        scheduleMonth = BoardCalendar.month
         scheduleEntryIDs = [:]
         friends = []
         strangerCandidates = []
@@ -145,7 +152,7 @@ final class AppStore {
                 profile = row.asUserProfile
                 isVerified = row.isVerified
                 isSubscribed = row.isSubscribed
-                await loadSchedule(userID: userID)
+                await loadSchedule(userID: userID, year: BoardCalendar.year, month: BoardCalendar.month)
                 screen = .main
             } else {
                 screen = .profile
@@ -201,9 +208,10 @@ final class AppStore {
 
     // MARK: - Schedule
 
-    private func loadSchedule(userID: UUID) async {
+    @discardableResult
+    func loadSchedule(userID: UUID, year: Int, month: Int) async -> [StayEntry] {
         do {
-            let rows = try await SupabaseRepository.fetchSchedule(userID: userID)
+            let rows = try await SupabaseRepository.fetchSchedule(userID: userID, year: year, month: month)
             let hiddenMap = try await SupabaseRepository.fetchHiddenFrom(entryIDs: rows.map(\.id))
             var entries: [StayEntry] = []
             var idMap: [Int: UUID] = [:]
@@ -215,12 +223,22 @@ final class AppStore {
             }
             mySchedule = entries.sorted { $0.day < $1.day }
             scheduleEntryIDs = idMap
+            scheduleYear = year
+            scheduleMonth = month
+            return mySchedule
         } catch {
             lastErrorMessage = "スケジュールの読み込みに失敗しました。"
+            return []
         }
     }
 
-    func completeSchedule(_ entries: [StayEntry]) async {
+    /// `year`/`month` is whatever the schedule editor was displaying at
+    /// submit time — not necessarily `BoardCalendar`'s app-wide default, if
+    /// the user navigated to a different month first. `mySchedule`/
+    /// `scheduleEntryIDs` are already scoped to that same month (every
+    /// navigation reloads them via `loadSchedule` above), so the
+    /// removed-days diff below stays correct without needing those params.
+    func completeSchedule(_ entries: [StayEntry], year: Int, month: Int) async {
         guard let userID = authUserID else { return }
         do {
             let removedDays = Set(mySchedule.map(\.day)).subtracting(entries.map(\.day))
@@ -232,11 +250,13 @@ final class AppStore {
             }
             for entry in entries {
                 let id = try await SupabaseRepository.upsertScheduleEntry(
-                    userID: userID, day: entry.day, location: entry.location, from: entry.from, hiddenFrom: entry.hiddenFrom
+                    userID: userID, year: year, month: month, day: entry.day, location: entry.location, from: entry.from, hiddenFrom: entry.hiddenFrom
                 )
                 scheduleEntryIDs[entry.day] = id
             }
             mySchedule = entries.sorted { $0.day < $1.day }
+            scheduleYear = year
+            scheduleMonth = month
             screen = .main
         } catch {
             lastErrorMessage = "スケジュールの保存に失敗しました。"

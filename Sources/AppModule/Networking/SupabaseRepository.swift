@@ -74,11 +74,19 @@ enum SupabaseRepository {
 
     // MARK: - Schedule
 
-    static func fetchSchedule(userID: UUID) async throws -> [ScheduleEntryRow] {
-        try await PostgREST.select(
+    /// Scoped to one calendar month — the schedule editor can navigate to
+    /// any month, and without this filter a user with saved entries in more
+    /// than one real month would have their day-of-month numbers (the only
+    /// thing `StayEntry.day` tracks — see NetworkConversions.swift) collide
+    /// across months.
+    static func fetchSchedule(userID: UUID, year: Int, month: Int) async throws -> [ScheduleEntryRow] {
+        let start = postgresDateString(year: year, month: month, forDay: 1)
+        let (nextYear, nextMonth) = month == 12 ? (year + 1, 1) : (year, month + 1)
+        let end = postgresDateString(year: nextYear, month: nextMonth, forDay: 1)
+        return try await PostgREST.select(
             "schedule_entries",
             columns: "id,day,airport_code,available_from",
-            filters: [RestClient.eq("user_id", userID)],
+            filters: [RestClient.eq("user_id", userID), RestClient.gte("day", start), RestClient.lt("day", end)],
             order: "day.asc"
         )
     }
@@ -104,10 +112,10 @@ enum SupabaseRepository {
     /// Upserts one day's entry (unique on `user_id, day`) and replaces its
     /// hidden-from set, returning the row's id for further edits.
     @discardableResult
-    static func upsertScheduleEntry(userID: UUID, day: Int, location: String, from: String, hiddenFrom: [UUID]) async throws -> UUID {
+    static func upsertScheduleEntry(userID: UUID, year: Int, month: Int, day: Int, location: String, from: String, hiddenFrom: [UUID]) async throws -> UUID {
         let payload = ScheduleEntryInsert(
             userId: userID,
-            day: postgresDateString(forDay: day),
+            day: postgresDateString(year: year, month: month, forDay: day),
             airportCode: location,
             availableFrom: postgresTimeString(fromClientTime: from)
         )

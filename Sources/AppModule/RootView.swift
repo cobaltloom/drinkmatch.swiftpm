@@ -26,7 +26,13 @@ struct RootView: View {
                     ScheduleSetupView(
                         friends: store.friends,
                         initialEntries: store.mySchedule,
-                        onDone: { entries in Task { await store.completeSchedule(entries) } }
+                        initialYear: store.scheduleYear,
+                        initialMonth: store.scheduleMonth,
+                        onDone: { entries, year, month in Task { await store.completeSchedule(entries, year: year, month: month) } },
+                        onMonthChange: { year, month in
+                            guard let userID = store.authUserID else { return [] }
+                            return await store.loadSchedule(userID: userID, year: year, month: month)
+                        }
                     )
                 case .main:
                     MainView(store: store)

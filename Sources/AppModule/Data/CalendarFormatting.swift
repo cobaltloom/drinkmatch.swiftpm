@@ -1,25 +1,46 @@
 import Foundation
 
-/// The schedule board is scoped to a single demo month, mirroring the
-/// original prototype so the bundled sample schedules line up with real
-/// calendar cells.
+/// The app's default working month for anything not scoped to a specific
+/// navigated month (offer/proposal creation, other users' displayed stay
+/// days, etc). Airlines typically finalize next month's crew schedule by the
+/// 25th, so from the 25th onward there's nothing left to plan in the current
+/// month — the default rolls straight to next month. Computed once at
+/// launch (not mutable): `ScheduleSetupView` navigates its own separate
+/// local year/month instead of changing this global default, since offers/
+/// proposals elsewhere encode dates against it and shouldn't shift underfoot
+/// just because the schedule editor is browsing a different month.
 enum BoardCalendar {
-    static let year = 2026
-    static let month = 7 // July (1-indexed)
+    private static let target = defaultTargetMonth()
 
-    static var daysInMonth: Int {
+    static var year: Int { target.year }
+    static var month: Int { target.month }
+
+    static func defaultTargetMonth(today: Date = Date()) -> (year: Int, month: Int) {
+        let calendar = Calendar(identifier: .gregorian)
+        let comps = calendar.dateComponents([.year, .month, .day], from: today)
+        guard let year = comps.year, let month = comps.month, let day = comps.day else {
+            return (2026, 7)
+        }
+        guard day >= 25 else { return (year, month) }
+        return month == 12 ? (year + 1, 1) : (year, month + 1)
+    }
+
+    static func daysInMonth(year: Int, month: Int) -> Int {
         let components = DateComponents(year: year, month: month, day: 1)
         let calendar = Calendar(identifier: .gregorian)
         return calendar.range(of: .day, in: .month, for: calendar.date(from: components)!)!.count
     }
 
     /// Number of leading blank cells before day 1, with Sunday as the first column.
-    static var leadingBlankCount: Int {
+    static func leadingBlankCount(year: Int, month: Int) -> Int {
         let components = DateComponents(year: year, month: month, day: 1)
         let calendar = Calendar(identifier: .gregorian)
         let weekday = calendar.component(.weekday, from: calendar.date(from: components)!) // 1 = Sunday
         return weekday - 1
     }
+
+    static var daysInMonth: Int { daysInMonth(year: year, month: month) }
+    static var leadingBlankCount: Int { leadingBlankCount(year: year, month: month) }
 
     static let weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"]
 }

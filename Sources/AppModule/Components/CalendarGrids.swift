@@ -17,7 +17,12 @@ private struct WeekdayHeaderRow: View {
 }
 
 /// Month grid used to pick which off-days to register a schedule for.
+/// Takes `year`/`month` explicitly rather than reading `BoardCalendar`'s
+/// app-wide default, since the schedule editor navigates its own month
+/// independently of it — see ScheduleSetupView.
 struct ScheduleCalendarPicker: View {
+    var year: Int
+    var month: Int
     var selectedDays: Set<Int>
     var onToggle: (Int) -> Void
 
@@ -25,10 +30,10 @@ struct ScheduleCalendarPicker: View {
         VStack(spacing: 4) {
             WeekdayHeaderRow()
             LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(0..<BoardCalendar.leadingBlankCount, id: \.self) { _ in
+                ForEach(0..<BoardCalendar.leadingBlankCount(year: year, month: month), id: \.self) { _ in
                     Color.clear.aspectRatio(1, contentMode: .fit)
                 }
-                ForEach(1...BoardCalendar.daysInMonth, id: \.self) { day in
+                ForEach(1...BoardCalendar.daysInMonth(year: year, month: month), id: \.self) { day in
                     let isSelected = selectedDays.contains(day)
                     Button {
                         onToggle(day)

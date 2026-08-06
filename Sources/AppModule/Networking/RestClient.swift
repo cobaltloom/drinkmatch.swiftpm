@@ -100,6 +100,14 @@ enum RestClient {
         URLQueryItem(name: column, value: "eq.\(value)")
     }
 
+    static func gte<V: CustomStringConvertible>(_ column: String, _ value: V) -> URLQueryItem {
+        URLQueryItem(name: column, value: "gte.\(value)")
+    }
+
+    static func lt<V: CustomStringConvertible>(_ column: String, _ value: V) -> URLQueryItem {
+        URLQueryItem(name: column, value: "lt.\(value)")
+    }
+
     static func inList<V: CustomStringConvertible>(_ column: String, _ values: [V]) -> URLQueryItem {
         URLQueryItem(name: column, value: "in.(\(values.map(\.description).joined(separator: ",")))")
     }
