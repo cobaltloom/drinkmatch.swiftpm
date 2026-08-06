@@ -10,7 +10,7 @@ enum StoreKitManager {
     }
 
     enum PurchaseOutcome {
-        case verified(Transaction)
+        case verified(transaction: Transaction, jws: String)
         case pending
         case userCancelled
     }
@@ -25,7 +25,7 @@ enum StoreKitManager {
         case .success(let verification):
             switch verification {
             case .verified(let transaction):
-                return .verified(transaction)
+                return .verified(transaction: transaction, jws: verification.jwsRepresentation)
             case .unverified(_, let error):
                 throw error
             }

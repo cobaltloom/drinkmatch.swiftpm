@@ -293,8 +293,8 @@ final class AppStore {
         defer { isPurchasing = false }
         do {
             switch try await StoreKitManager.purchase(product, appAccountToken: userID) {
-            case .verified(let transaction):
-                try await SupabaseRepository.verifyPurchase(transactionJWS: transaction.jwsRepresentation)
+            case .verified(let transaction, let jws):
+                try await SupabaseRepository.verifyPurchase(transactionJWS: jws)
                 await transaction.finish()
                 await refreshSubscriptionStatus()
             case .pending, .userCancelled:
@@ -321,7 +321,7 @@ final class AppStore {
     func observeTransactionUpdates() async {
         for await result in Transaction.updates {
             guard case .verified(let transaction) = result else { continue }
-            try? await SupabaseRepository.verifyPurchase(transactionJWS: transaction.jwsRepresentation)
+            try? await SupabaseRepository.verifyPurchase(transactionJWS: result.jwsRepresentation)
             await transaction.finish()
             await refreshSubscriptionStatus()
         }
