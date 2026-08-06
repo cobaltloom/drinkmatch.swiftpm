@@ -43,6 +43,7 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .safeAreaInset(edge: .top, spacing: 0) { TestEnvironmentBanner() }
         .task { await store.bootstrap() }
         .task { await store.observeTransactionUpdates() }
         .alert(
@@ -51,6 +52,24 @@ struct RootView: View {
             actions: { Button("OK", role: .cancel) {} },
             message: { Text(store.lastErrorMessage ?? "") }
         )
+    }
+}
+
+/// Persistent, impossible-to-miss reminder that this build talks to the
+/// test Supabase project, not production — shown above every screen
+/// (including SetupNoticeView/SignInView) regardless of app state. Renders
+/// nothing at all when SupabaseConfig.environment is .production, so it's
+/// zero-height and invisible on a real production build.
+private struct TestEnvironmentBanner: View {
+    var body: some View {
+        if SupabaseConfig.environment == .test {
+            Text("⚠️ TEST ENVIRONMENT — 本番データではありません")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(Color.red)
+        }
     }
 }
 

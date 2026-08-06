@@ -58,7 +58,16 @@ Store Connect.
 2. Open `Sources/AppModule/Networking/SupabaseConfig.swift` and fill in your
    project's URL and anon/publishable key (Dashboard > Project Settings >
    API). The app shows a setup notice screen instead of the real UI until
-   this is done (`SupabaseConfig.isConfigured`).
+   this is done (`SupabaseConfig.isConfigured`). If you're running two
+   Supabase projects (a production one plus a separate one for testing —
+   recommended once real users are involved, since it keeps test data out of
+   production and vice versa), also set `SupabaseConfig.environment` to
+   match (`.production` / `.test`) every time you point the build at a
+   different project. It's a separate, deliberate switch rather than
+   something inferred from the URL — nothing distinguishes a prod project's
+   URL from a test project's by pattern — and `.test` makes RootView show a
+   permanent red "TEST ENVIRONMENT" banner over the whole app so a test
+   build can never be mistaken for production, or vice versa.
 3. In Supabase Dashboard > Authentication > Providers, enable **Apple** as a
    sign-in provider, and add your app's bundle identifier
    (`com.translate5jp.DrinkMatch`, see `Package.swift`) to its Client IDs
