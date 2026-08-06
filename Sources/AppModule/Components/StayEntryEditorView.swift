@@ -9,6 +9,11 @@ struct StayEntryEditorView: View {
     var onRemove: () -> Void
 
     @State private var showHideOptions = false
+    /// Remembers the last specific time so unchecking "一日中OK" restores it
+    /// instead of leaving the picker at midnight.
+    @State private var savedTime = "19:00"
+
+    private var isAllDay: Bool { entry.from == "00:00" }
 
     private var timeBinding: Binding<Date> {
         Binding(get: { date(fromTimeString: entry.from) }, set: { entry.from = timeString(from: $0) })
@@ -42,9 +47,11 @@ struct StayEntryEditorView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
 
-                DatePicker("", selection: timeBinding, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                    .tint(Theme.amber)
+                if !isAllDay {
+                    DatePicker("", selection: timeBinding, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .tint(Theme.amber)
+                }
 
                 Button {
                     onRemove()
@@ -56,6 +63,18 @@ struct StayEntryEditorView: View {
                         .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
                 }
             }
+
+            Button {
+                toggleAllDay()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isAllDay ? "checkmark.square.fill" : "square")
+                    Text("一日中OK")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(isAllDay ? Theme.amber : Theme.muted)
+            }
+            .buttonStyle(.plain)
 
             if !friends.isEmpty {
                 Button {
@@ -92,6 +111,15 @@ struct StayEntryEditorView: View {
         }
         .padding(.bottom, 10)
         .overlay(Divider().background(Theme.divider), alignment: .bottom)
+    }
+
+    private func toggleAllDay() {
+        if isAllDay {
+            entry.from = savedTime
+        } else {
+            savedTime = entry.from
+            entry.from = "00:00"
+        }
     }
 
     private func toggleHidden(_ friendID: UUID) {
