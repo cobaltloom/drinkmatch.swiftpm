@@ -32,7 +32,8 @@ struct RootView: View {
                         onMonthChange: { year, month in
                             guard let userID = store.authUserID else { return [] }
                             return await store.loadSchedule(userID: userID, year: year, month: month)
-                        }
+                        },
+                        onCancel: { store.screen = .main }
                     )
                 case .main:
                     MainView(store: store)

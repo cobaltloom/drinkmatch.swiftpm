@@ -15,6 +15,7 @@ struct ScheduleSetupView: View {
     var initialMonth: Int
     var onDone: ([StayEntry], Int, Int) -> Void
     var onMonthChange: (Int, Int) async -> [StayEntry]
+    var onCancel: () -> Void
 
     @State private var entries: [StayEntry]
     @State private var selectedDays: Set<Int>
@@ -28,7 +29,8 @@ struct ScheduleSetupView: View {
         initialYear: Int,
         initialMonth: Int,
         onDone: @escaping ([StayEntry], Int, Int) -> Void,
-        onMonthChange: @escaping (Int, Int) async -> [StayEntry]
+        onMonthChange: @escaping (Int, Int) async -> [StayEntry],
+        onCancel: @escaping () -> Void
     ) {
         self.friends = friends
         self.initialEntries = initialEntries
@@ -36,6 +38,7 @@ struct ScheduleSetupView: View {
         self.initialMonth = initialMonth
         self.onDone = onDone
         self.onMonthChange = onMonthChange
+        self.onCancel = onCancel
         _entries = State(initialValue: initialEntries.sorted { $0.day < $1.day })
         _selectedDays = State(initialValue: Set(initialEntries.map(\.day)))
         _year = State(initialValue: initialYear)
@@ -48,6 +51,10 @@ struct ScheduleSetupView: View {
 
     var body: some View {
         BoardScreenContainer {
+            Button("← ホームに戻る") { onCancel() }
+                .buttonStyle(BoardChromeButtonStyle())
+                .padding(.bottom, 10)
+
             Text("SCHEDULE — ステイ先と空き時間").splitFlap(18, weight: .bold).foregroundStyle(Theme.amber)
             Text("オフの日をタップし、ステイ先(滞在都市)と何時から動けるかを入力してください。特定の知り合いにだけ見せたくない日は、各エントリの「非公開にする」から設定できます。")
                 .font(.system(size: 12))
