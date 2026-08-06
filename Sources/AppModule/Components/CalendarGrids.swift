@@ -34,10 +34,10 @@ struct ScheduleCalendarPicker: View {
                         onToggle(day)
                     } label: {
                         Text("\(day)")
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(.system(size: 14, design: .monospaced))
                             .foregroundStyle(isSelected ? Theme.amber : Theme.muted)
                             .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fit)
+                            .aspectRatio(1, contentMode: .fill)
                             .background(isSelected ? Theme.amberBackground : Theme.field)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             .overlay(
@@ -75,10 +75,10 @@ struct ReadOnlyStayCalendar: View {
                         if let entry { onPick(entry) }
                     } label: {
                         Text("\(day)")
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.system(size: 13, design: .monospaced))
                             .foregroundStyle(entry != nil ? Theme.green : Color(hex: 0x3A4656))
                             .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fit)
+                            .aspectRatio(1, contentMode: .fill)
                             .background(entry != nil ? Theme.greenBackground : Theme.field)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             .overlay(
