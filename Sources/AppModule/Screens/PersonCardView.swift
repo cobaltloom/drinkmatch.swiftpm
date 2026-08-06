@@ -17,7 +17,13 @@ struct PersonCardView: View {
     /// mock-data prototype's single ambiguous "誘う" button — offering is
     /// per overlapping day, not per person.
     var onOffer: (Person, StayOverlap, Bool) -> Void
-    var onPass: (Person) -> Void
+    /// nil hides "見送る" entirely — passing only means anything for
+    /// stranger candidates (it hides them from future stranger search
+    /// results server-side; see AppStore.pass). A friend can't meaningfully
+    /// be "passed": list_friends_with_overlap doesn't consult
+    /// passed_candidates at all, so the button used to do nothing when
+    /// shown on a friend card. FriendsTabView passes nil for this reason.
+    var onPass: ((Person) -> Void)?
     var onReport: (Person, ReportReason, String) async -> String?
     var onBlock: (Person) async -> Void
 
@@ -26,7 +32,7 @@ struct PersonCardView: View {
 
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, showFullName: Bool,
          defaultAutoAccept: Bool,
-         onOffer: @escaping (Person, StayOverlap, Bool) -> Void, onPass: @escaping (Person) -> Void,
+         onOffer: @escaping (Person, StayOverlap, Bool) -> Void, onPass: ((Person) -> Void)?,
          onReport: @escaping (Person, ReportReason, String) async -> String?, onBlock: @escaping (Person) async -> Void) {
         self.person = person
         self.overlap = overlap
@@ -111,9 +117,11 @@ struct PersonCardView: View {
                     .padding(.top, 8)
                 }
 
-                Button("見送る") { onPass(person) }
-                    .buttonStyle(BoardChromeButtonStyle())
-                    .padding(.top, 6)
+                if let onPass {
+                    Button("見送る") { onPass(person) }
+                        .buttonStyle(BoardChromeButtonStyle())
+                        .padding(.top, 6)
+                }
             }
         }
         .padding(.bottom, 10)
