@@ -12,6 +12,16 @@ import Foundation
 /// certain to be rejected).
 let maxReferralCodesPerUser = 3
 
+/// Whether the "この誘いは自動承諾でOK" checkbox shows on offer/group-offer
+/// creation (PersonCardView, GroupOrganizerView). Off means every offer
+/// always requires the recipient's explicit "承諾する" action, regardless of
+/// what the sender would otherwise have picked — PersonCardView/
+/// GroupOrganizerView force their local `autoAccept` state to `false`
+/// whenever this is off, not just hide the checkbox. Flip back to `true` to
+/// restore it; nothing downstream (create_offer's auto_accept param, etc.)
+/// needs to change.
+let autoAcceptOfferFeatureEnabled = false
+
 /// The auto-renewable subscription unlocking "新しい人と探す" (stranger
 /// matching). Must match a product ID actually created in App Store
 /// Connect — see drinkmatch-backend's README "Billing" for the server side

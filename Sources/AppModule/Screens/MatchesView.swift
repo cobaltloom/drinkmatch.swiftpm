@@ -182,7 +182,7 @@ struct MatchesView: View {
                         Button("承諾する") { Task { await store.acceptOffer(offerID: match.offerID) } }
                             .buttonStyle(BoardButtonStyle())
                     } else {
-                        Text("この誘いは自動承諾を選ばなかったため、相手が承諾するまで集合案は送れません。")
+                        Text("相手が承諾するまで集合案は送れません。")
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.muted)
                             .fixedSize(horizontal: false, vertical: true)

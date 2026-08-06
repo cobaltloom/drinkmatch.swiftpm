@@ -37,7 +37,7 @@ struct PersonCardView: View {
         self.onPass = onPass
         self.onReport = onReport
         self.onBlock = onBlock
-        _autoAccept = State(initialValue: defaultAutoAccept)
+        _autoAccept = State(initialValue: autoAcceptOfferFeatureEnabled && defaultAutoAccept)
     }
 
     var body: some View {
@@ -101,13 +101,15 @@ struct PersonCardView: View {
             case .expired:
                 Text("誘いの有効期限が切れました").font(.system(size: 12)).foregroundStyle(Theme.faint).padding(.top, 8)
             case nil:
-                Toggle(isOn: $autoAccept) {
-                    Text("この誘いは自動承諾でOK(承諾ステップを省略)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.muted)
+                if autoAcceptOfferFeatureEnabled {
+                    Toggle(isOn: $autoAccept) {
+                        Text("この誘いは自動承諾でOK(承諾ステップを省略)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.muted)
+                    }
+                    .toggleStyle(.checkbox)
+                    .padding(.top, 8)
                 }
-                .toggleStyle(.checkbox)
-                .padding(.top, 8)
 
                 Button("見送る") { onPass(person) }
                     .buttonStyle(BoardChromeButtonStyle())

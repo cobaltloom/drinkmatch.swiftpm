@@ -69,12 +69,14 @@ struct GroupOrganizerView: View {
                         )
                     }
 
-                    Toggle(isOn: $autoAccept) {
-                        Text("全員の誘いを自動承諾でOKにする(承諾ステップを省略)")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Theme.muted)
+                    if autoAcceptOfferFeatureEnabled {
+                        Toggle(isOn: $autoAccept) {
+                            Text("全員の誘いを自動承諾でOKにする(承諾ステップを省略)")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Theme.muted)
+                        }
+                        .toggleStyle(.checkbox)
                     }
-                    .toggleStyle(.checkbox)
 
                     Button("\(selectedIDs.count)人をまとめて誘う") { submit() }
                         .buttonStyle(BoardButtonStyle(isDisabled: selectedIDs.isEmpty))
