@@ -59,9 +59,7 @@ struct FriendsTabView: View {
                         offerStatus: store.status(for: person.id),
                         showFullName: true,
                         defaultAutoAccept: true,
-                        onOffer: { person, overlap, autoAccept in
-                            Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }
-                        },
+                        onOffer: nil,
                         onPass: nil,
                         onReport: { person, reason, details in
                             await store.submitReport(reportedUserID: person.id, reason: reason, details: details)

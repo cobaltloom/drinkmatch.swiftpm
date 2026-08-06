@@ -15,8 +15,12 @@ struct PersonCardView: View {
     /// The backend pins an offer to one specific day + airport at creation
     /// time (handoff doc §7's OFFERS.day/airport_code), so — unlike the
     /// mock-data prototype's single ambiguous "誘う" button — offering is
-    /// per overlapping day, not per person.
-    var onOffer: (Person, StayOverlap, Bool) -> Void
+    /// per overlapping day, not per person. nil hides "🍻 誘う" entirely —
+    /// friends are assumed to already have each other's contact info (LINE,
+    /// etc.), so the in-app offer/accept flow is stranger-only.
+    /// FriendsTabView passes nil for this reason; the overlap listing itself
+    /// (which day + airport you're both free) still shows either way.
+    var onOffer: ((Person, StayOverlap, Bool) -> Void)?
     /// nil hides "見送る" entirely — passing only means anything for
     /// stranger candidates (it hides them from future stranger search
     /// results server-side; see DrinkMatchStore.pass). A friend can't meaningfully
@@ -32,7 +36,7 @@ struct PersonCardView: View {
 
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, showFullName: Bool,
          defaultAutoAccept: Bool,
-         onOffer: @escaping (Person, StayOverlap, Bool) -> Void, onPass: ((Person) -> Void)?,
+         onOffer: ((Person, StayOverlap, Bool) -> Void)?, onPass: ((Person) -> Void)?,
          onReport: @escaping (Person, ReportReason, String) async -> String?, onBlock: @escaping (Person) async -> Void) {
         self.person = person
         self.overlap = overlap
@@ -85,7 +89,7 @@ struct PersonCardView: View {
                                     .font(.system(size: 12)).foregroundStyle(Theme.text)
                             }
                             Spacer()
-                            if offerStatus == nil {
+                            if offerStatus == nil, let onOffer {
                                 Button("🍻 誘う") { onOffer(person, overlapDay, autoAccept) }
                                     .buttonStyle(BoardOutlineButtonStyle())
                             }
@@ -107,7 +111,7 @@ struct PersonCardView: View {
             case .expired:
                 Text("誘いの有効期限が切れました").font(.system(size: 12)).foregroundStyle(Theme.faint).padding(.top, 8)
             case nil:
-                if autoAcceptOfferFeatureEnabled {
+                if autoAcceptOfferFeatureEnabled, onOffer != nil {
                     Toggle(isOn: $autoAccept) {
                         Text("この誘いは自動承諾でOK(承諾ステップを省略)")
                             .font(.system(size: 11))
