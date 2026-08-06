@@ -105,7 +105,7 @@ struct ScheduleSetupView: View {
 
             Spacer()
 
-            Text("\(year)年\(month)月")
+            Text("\(String(year))年\(String(month))月")
                 .font(.system(size: 14, weight: .bold, design: .monospaced))
                 .foregroundStyle(Theme.amber)
 
