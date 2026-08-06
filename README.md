@@ -164,6 +164,18 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   in the friends tab). The prototype only had pre-seeded mock codes issued by
   other mock users — there was never a way for a real user to produce one to
   hand to a friend.
+- **The schedule board's active month is now real, not a frozen demo
+  value.** `BoardCalendar.year`/`.month` used to be hardcoded to July 2026,
+  mirroring the mock-data prototype. It's now computed from the actual
+  date — before the 25th, the current month; from the 25th onward, next
+  month (matching when airlines typically finalize next month's crew
+  schedule) — fixed for the app's process lifetime and used app-wide (offer/
+  proposal creation, other users' displayed stay days). `ScheduleSetupView`
+  additionally has its own independently navigable month (prev/next
+  buttons) for browsing/editing other months without shifting that app-wide
+  default underfoot; `fetchSchedule` is now filtered to one real month at a
+  time so two different months' entries can't collide on the same
+  day-of-month number (`StayEntry.day` is still just a bare `Int`).
 - **"見送る" (pass) persists server-side** (`passed_candidates` table)
   instead of only living in local component state, so it survives across
   devices/reinstalls.
