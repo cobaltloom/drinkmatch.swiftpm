@@ -4,7 +4,7 @@ import SwiftUI
 /// block are independent actions (App Store Review Guideline 1.2 requires
 /// both to be available for any user-to-user interaction): reporting alone
 /// leaves the match/candidate in place, while blocking removes the person
-/// from every list immediately (see AppStore.blockUser) and can be done
+/// from every list immediately (see DrinkMatchStore.blockUser) and can be done
 /// with or without filing a report first.
 struct ReportBlockSheet: View {
     var person: Person

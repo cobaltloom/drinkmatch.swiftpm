@@ -2,7 +2,7 @@ import StoreKit
 
 /// Thin wrapper around StoreKit 2 for the one subscription product this app
 /// sells. Mirrors SupabaseRepository's pattern of a static-function enum —
-/// AppStore owns the resulting state, this just talks to the framework.
+/// DrinkMatchStore owns the resulting state, this just talks to the framework.
 enum StoreKitManager {
     static func fetchSubscriptionProduct() async throws -> Product? {
         let products = try await Product.products(for: [subscriptionProductID])
@@ -38,9 +38,10 @@ enum StoreKitManager {
         }
     }
 
-    /// StoreKit's own `AppStore` type, fully qualified because `import
-    /// StoreKit` brings it into scope alongside this project's own AppStore
-    /// (Store/AppStore.swift) — same name, unrelated types.
+    /// Fully qualified for clarity even though nothing else named `AppStore`
+    /// is in scope any more (this project's app-state store is
+    /// `DrinkMatchStore` — see Store/DrinkMatchStore.swift — specifically to
+    /// avoid colliding with StoreKit's own `AppStore` type here).
     static func restorePurchases() async throws {
         try await StoreKit.AppStore.sync()
     }

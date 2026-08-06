@@ -107,7 +107,7 @@ struct BoardChromeButtonStyle: ButtonStyle {
 
 /// Minimal checkbox-style toggle so labels read left-to-right like a form
 /// checkbox instead of a trailing iOS switch.
-struct CheckboxToggleStyle: ToggleStyle {
+struct BoardCheckboxToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         Button {
             configuration.isOn.toggle()
@@ -122,6 +122,6 @@ struct CheckboxToggleStyle: ToggleStyle {
     }
 }
 
-extension ToggleStyle where Self == CheckboxToggleStyle {
-    static var checkbox: CheckboxToggleStyle { CheckboxToggleStyle() }
+extension ToggleStyle where Self == BoardCheckboxToggleStyle {
+    static var checkbox: BoardCheckboxToggleStyle { BoardCheckboxToggleStyle() }
 }

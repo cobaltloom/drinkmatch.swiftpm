@@ -3,10 +3,10 @@ import SwiftUI
 /// Monthly-plan paywall shown after identity verification, before stranger
 /// matching unlocks. Price/product info comes live from StoreKit; purchases
 /// are verified server-side before `isSubscribed` actually flips — see
-/// AppStore.purchaseSubscription/restorePurchases and drinkmatch-backend's
+/// DrinkMatchStore.purchaseSubscription/restorePurchases and drinkmatch-backend's
 /// README "Billing".
 struct PaywallGateView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     var body: some View {
         BoardCard {

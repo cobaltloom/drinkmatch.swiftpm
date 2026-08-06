@@ -1,6 +1,6 @@
 import Foundation
 
-/// All network I/O + DTO<->domain mapping lives here so AppStore stays
+/// All network I/O + DTO<->domain mapping lives here so DrinkMatchStore stays
 /// focused on app state. Every function that touches a table relying on a
 /// "party to this row" RLS policy (offers, group_offers,
 /// group_offer_members, proposals, notifications, schedule_entries) can
@@ -12,7 +12,7 @@ import Foundation
 /// rather than the official supabase-swift SDK — see RestClient's header
 /// comment for why (the SDK can't be built in Swift Playgrounds). Every
 /// function here has the exact same signature it had when this called the
-/// SDK, so nothing above this file (AppStore, any view) needed to change.
+/// SDK, so nothing above this file (DrinkMatchStore, any view) needed to change.
 enum SupabaseRepository {
     // MARK: - Auth
 

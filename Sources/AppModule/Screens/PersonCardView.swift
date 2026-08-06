@@ -19,7 +19,7 @@ struct PersonCardView: View {
     var onOffer: (Person, StayOverlap, Bool) -> Void
     /// nil hides "見送る" entirely — passing only means anything for
     /// stranger candidates (it hides them from future stranger search
-    /// results server-side; see AppStore.pass). A friend can't meaningfully
+    /// results server-side; see DrinkMatchStore.pass). A friend can't meaningfully
     /// be "passed": list_friends_with_overlap doesn't consult
     /// passed_candidates at all, so the button used to do nothing when
     /// shown on a friend card. FriendsTabView passes nil for this reason.

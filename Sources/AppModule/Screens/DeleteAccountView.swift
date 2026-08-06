@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Confirmation flow for AppStore.deleteAccount(), reachable from MainView's
+/// Confirmation flow for DrinkMatchStore.deleteAccount(), reachable from MainView's
 /// overflow menu — App Store Review Guideline 5.1.1(v) requires account
 /// deletion to be possible from within the app itself, not just by
 /// contacting support.
 struct DeleteAccountView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     @Environment(\.dismiss) private var dismiss
     @State private var isDeleting = false

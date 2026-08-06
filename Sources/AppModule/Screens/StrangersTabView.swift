@@ -3,7 +3,7 @@ import SwiftUI
 /// "新しい人と探す" — gated behind identity verification and a monthly
 /// subscription before the actual search UI is shown.
 struct StrangersTabView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     var body: some View {
         if !store.isVerified {
@@ -20,7 +20,7 @@ struct StrangersTabView: View {
 }
 
 private struct StrangersSearchView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     @State private var filterBase = "ALL"
     @State private var filterRole = "ALL"

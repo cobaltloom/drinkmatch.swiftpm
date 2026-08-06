@@ -3,11 +3,11 @@ import SwiftUI
 /// "ARRIVALS" — the match list: every active 1:1 offer and group offer,
 /// with a detail pane for accepting / sending the meetup proposal.
 struct MatchesView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     private enum Entry: Hashable {
         case individual(UUID)
-        case group(String)
+        case group(UUID)
     }
 
     @State private var activeEntry: Entry?

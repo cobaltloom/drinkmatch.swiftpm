@@ -8,7 +8,7 @@ struct StayEntryEditorView: View {
     var friends: [Person]
     var onRemove: () -> Void
 
-    @State private var showHideOptions = false
+    @State private var showingHideOptions = false
     /// Remembers the last specific time so unchecking "一日中OK" restores it
     /// instead of leaving the picker at midnight.
     @State private var savedTime = "19:00"
@@ -78,7 +78,7 @@ struct StayEntryEditorView: View {
 
             if !friends.isEmpty {
                 Button {
-                    showHideOptions.toggle()
+                    showingHideOptions.toggle()
                 } label: {
                     Text(entry.hiddenFrom.isEmpty ? "特定の知り合いに非公開にする ▾" : "この日を\(entry.hiddenFrom.count)人に非公開中 ▾")
                         .font(.system(size: 11))
@@ -86,7 +86,7 @@ struct StayEntryEditorView: View {
                 }
                 .buttonStyle(.plain)
 
-                if showHideOptions {
+                if showingHideOptions {
                     FlowLayout(spacing: 6) {
                         ForEach(friends) { friend in
                             Button {

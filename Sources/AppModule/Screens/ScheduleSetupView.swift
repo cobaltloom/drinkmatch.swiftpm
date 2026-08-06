@@ -4,7 +4,7 @@ import SwiftUI
 /// for first-run setup and for later edits from the main screen.
 ///
 /// Defaults to `initialYear`/`initialMonth` (the caller passes
-/// `AppStore.scheduleYear`/`.scheduleMonth`, itself seeded from
+/// `DrinkMatchStore.scheduleYear`/`.scheduleMonth`, itself seeded from
 /// `BoardCalendar`'s 25th-of-the-month-rolls-to-next-month default) but
 /// navigates its own local month independently of that app-wide default —
 /// see BoardCalendar's header comment for why the two are kept separate.

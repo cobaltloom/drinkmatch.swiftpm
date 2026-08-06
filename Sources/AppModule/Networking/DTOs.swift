@@ -429,10 +429,6 @@ struct PassedCandidateInsert: Encodable {
     }
 }
 
-struct ReadFlagUpdate: Encodable {
-    var read: Bool
-}
-
 struct PushTokenInsert: Encodable {
     var userId: UUID
     var platform: String
@@ -441,4 +437,10 @@ struct PushTokenInsert: Encodable {
         case userId = "user_id"
         case platform, token
     }
+}
+
+// MARK: - Update payloads
+
+struct ReadFlagUpdate: Encodable {
+    var read: Bool
 }

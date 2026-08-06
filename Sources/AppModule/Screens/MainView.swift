@@ -3,7 +3,7 @@ import SwiftUI
 /// The home screen: profile summary, mode switcher (friends vs. strangers),
 /// and the active tab's candidate list.
 struct MainView: View {
-    @Bindable var store: AppStore
+    @Bindable var store: DrinkMatchStore
 
     @State private var showingBlockedUsers = false
     @State private var showingDeleteAccount = false

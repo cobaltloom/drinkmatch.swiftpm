@@ -88,8 +88,8 @@ struct GroupMember: Identifiable, Hashable {
 }
 
 /// A group drink invitation tied to one shared day + stay airport.
-struct DrinkGroup: Identifiable {
-    var id: String
+struct GroupOffer: Identifiable {
+    var id: UUID
     var day: Int
     var location: String
     var members: [GroupMember]

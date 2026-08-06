@@ -3,7 +3,7 @@ import SwiftUI
 /// "知り合いから探す" — free, no-verification matching against friends
 /// added via invite code.
 struct FriendsTabView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     @State private var code = ""
     @State private var errorMessage = ""

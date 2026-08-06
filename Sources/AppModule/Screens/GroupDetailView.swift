@@ -3,7 +3,7 @@ import SwiftUI
 /// Detail pane for a group offer: member accept status, and — once at
 /// least one member has accepted — a form to send the meetup proposal.
 struct GroupDetailView: View {
-    var group: DrinkGroup
+    var group: GroupOffer
     /// Needed to tell "my own membership row" (which I can accept) apart
     /// from everyone else's (read-only — accepting is `auth.uid()`-scoped
     /// server-side, so I can't act on another member's behalf).

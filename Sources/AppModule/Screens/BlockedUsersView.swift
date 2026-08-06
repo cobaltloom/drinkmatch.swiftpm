@@ -1,11 +1,11 @@
 import SwiftUI
 
 /// Reachable from MainView's overflow menu — lists users this account has
-/// blocked and lets them be unblocked (see AppStore.blockedUsers /
+/// blocked and lets them be unblocked (see DrinkMatchStore.blockedUsers /
 /// unblockUser). Blocking is per-account, so this reads/writes the
 /// `blocks` table via `list_blocked_users()` / `unblock_user()`.
 struct BlockedUsersView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     @Environment(\.dismiss) private var dismiss
 

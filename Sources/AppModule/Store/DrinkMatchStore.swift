@@ -9,7 +9,7 @@ import StoreKit
 /// with network awaits suspending in between.
 @MainActor
 @Observable
-final class AppStore {
+final class DrinkMatchStore {
     var authUserID: UUID?
     var isBootstrapping = true
 
@@ -32,7 +32,7 @@ final class AppStore {
     var overlapCache: [UUID: [StayOverlap]] = [:]
 
     var matches: [MatchedPerson] = []
-    var groups: [DrinkGroup] = []
+    var groups: [GroupOffer] = []
 
     var isVerified = false
     var isSubscribed = false
@@ -511,13 +511,13 @@ final class AppStore {
                 ))
             }
 
-            var newGroups: [DrinkGroup] = []
+            var newGroups: [GroupOffer] = []
             for row in groupRows {
                 guard let day = dayOfMonth(fromPostgresDate: row.day) else { continue }
                 let memberRows = (try? await SupabaseRepository.fetchGroupMembersInfo(groupOfferID: row.id)) ?? []
                 let members = memberRows.map { GroupMember(person: $0.asPerson, status: $0.status) }
                 let sentProposal = (try? await SupabaseRepository.fetchProposal(groupOfferID: row.id))?.asProposal
-                newGroups.append(DrinkGroup(id: row.id.uuidString, day: day, location: row.airportCode, members: members, sentProposal: sentProposal))
+                newGroups.append(GroupOffer(id: row.id, day: day, location: row.airportCode, members: members, sentProposal: sentProposal))
             }
 
             matches = newMatches
@@ -558,10 +558,9 @@ final class AppStore {
         }
     }
 
-    func acceptGroupMembership(groupOfferID: String) async {
-        guard let id = UUID(uuidString: groupOfferID) else { return }
+    func acceptGroupMembership(groupOfferID: UUID) async {
         do {
-            try await SupabaseRepository.acceptGroupOfferMembership(groupOfferID: id)
+            try await SupabaseRepository.acceptGroupOfferMembership(groupOfferID: groupOfferID)
             await loadMatches()
         } catch {
             lastErrorMessage = "参加の承諾に失敗しました。"
@@ -579,10 +578,10 @@ final class AppStore {
         }
     }
 
-    func sendGroupProposal(groupOfferID: String, time: String, place: String) async {
-        guard let id = UUID(uuidString: groupOfferID), let group = groups.first(where: { $0.id == groupOfferID }) else { return }
+    func sendGroupProposal(groupOfferID: UUID, time: String, place: String) async {
+        guard let group = groups.first(where: { $0.id == groupOfferID }) else { return }
         do {
-            _ = try await SupabaseRepository.sendProposal(day: group.day, location: group.location, time: time, place: place, offerID: nil, groupOfferID: id)
+            _ = try await SupabaseRepository.sendProposal(day: group.day, location: group.location, time: time, place: place, offerID: nil, groupOfferID: groupOfferID)
             await loadMatches()
         } catch {
             lastErrorMessage = "集合案の送信に失敗しました。"

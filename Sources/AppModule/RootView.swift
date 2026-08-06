@@ -4,7 +4,7 @@ import SwiftUI
 /// profile yet → onboarding, otherwise the prototype's original
 /// profile → schedule → main → matches flow.
 struct RootView: View {
-    @State private var store = AppStore()
+    @State private var store = DrinkMatchStore()
 
     var body: some View {
         Group {

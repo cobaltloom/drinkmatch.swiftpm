@@ -6,7 +6,7 @@ import AuthenticationServices
 /// Store Review Guideline 4.8); this app offers only Apple for now, which
 /// keeps things simple and compliant from day one.
 struct SignInView: View {
-    var store: AppStore
+    var store: DrinkMatchStore
 
     // MARK: - Temporary dev-only email sign-in
     //
@@ -34,7 +34,7 @@ struct SignInView: View {
                 SignInWithAppleButton(.signIn) { request in
                     request.requestedScopes = [.fullName, .email]
                 } onCompletion: { result in
-                    handle(result)
+                    handleAppleSignInResult(result)
                 }
                 .signInWithAppleButtonStyle(.white)
                 .frame(height: 50)
@@ -99,7 +99,7 @@ struct SignInView: View {
         devMessage = await action(devEmail, devPassword)
     }
 
-    private func handle(_ result: Result<ASAuthorization, Error>) {
+    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
             guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
