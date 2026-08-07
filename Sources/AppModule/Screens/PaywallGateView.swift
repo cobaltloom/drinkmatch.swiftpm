@@ -11,7 +11,7 @@ struct PaywallGateView: View {
     var body: some View {
         BoardCard {
             VStack(spacing: 6) {
-                Text("新しい人と探す機能は月額プランです")
+                Text("新しい人を探す機能は月額プランです")
                     .splitFlap(14, weight: .bold)
                     .foregroundStyle(Theme.amber)
                     .multilineTextAlignment(.center)

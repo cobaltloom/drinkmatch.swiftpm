@@ -61,20 +61,20 @@ struct ProfileSetupView: View {
                 AirportAutocompleteField(code: $base)
 
                 Text("お名前").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
-                TextField("例: 田中 陽介", text: $fullName)
+                TextField("例: YOSUKE TANAKA", text: $fullName)
                     .font(.system(size: 14))
                     .padding(10)
                     .background(Theme.field)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-                Text("知り合いにはこのお名前が表示されます。新しい人と探す機能ではイニシャル生成にのみ使用され、直接は表示されません。")
+                Text("知り合いにはこのお名前が表示されます。新しい人を探す機能ではイニシャル生成にのみ使用され、直接は表示されません。")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
                     .padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("新しい人と探す機能での表示名").font(.system(size: 12)).foregroundStyle(Theme.muted)
+                    Text("新しい人を探す機能での表示名").font(.system(size: 12)).foregroundStyle(Theme.muted)
                     Picker("表示名", selection: $displayMode) {
                         Text("イニシャル").tag(DisplayMode.initials)
                         Text("ニックネーム").tag(DisplayMode.nickname)
