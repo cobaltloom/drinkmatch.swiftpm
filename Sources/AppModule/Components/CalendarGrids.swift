@@ -51,7 +51,7 @@ struct ScheduleCalendarPicker: View {
                 ForEach(monthCells(year: year, month: month), id: \.self) { cell in
                     switch cell {
                     case .blank:
-                        Color.clear.aspectRatio(1, contentMode: .fit)
+                        Color.clear.frame(maxWidth: .infinity).aspectRatio(1, contentMode: .fill)
                     case .day(let day):
                         dayCell(day)
                     }
@@ -101,7 +101,7 @@ struct ReadOnlyStayCalendar: View {
                 ForEach(monthCells(year: BoardCalendar.year, month: BoardCalendar.month), id: \.self) { cell in
                     switch cell {
                     case .blank:
-                        Color.clear.aspectRatio(1, contentMode: .fit)
+                        Color.clear.frame(maxWidth: .infinity).aspectRatio(1, contentMode: .fill)
                     case .day(let day):
                         dayCell(day)
                     }
