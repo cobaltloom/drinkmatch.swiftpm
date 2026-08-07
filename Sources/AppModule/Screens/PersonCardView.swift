@@ -11,6 +11,9 @@ struct PersonCardView: View {
     var overlap: [StayOverlap]
     var offerStatus: OfferStatus?
     var showFullName: Bool
+    /// Stranger search hides base airport (the user asked strangers not see
+    /// where someone is based); friends still see it.
+    var showBase: Bool
     var defaultAutoAccept: Bool
     /// The backend pins an offer to one specific day + airport at creation
     /// time (handoff doc §7's OFFERS.day/airport_code), so — unlike the
@@ -34,7 +37,15 @@ struct PersonCardView: View {
     @State private var autoAccept: Bool
     @State private var showingReportSheet = false
 
+    private var affiliationLine: String? {
+        var parts: [String] = []
+        if !person.airline.isEmpty { parts.append(person.airline) }
+        if showBase && !person.base.isEmpty { parts.append(person.base) }
+        return parts.isEmpty ? nil : parts.joined(separator: " / ")
+    }
+
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, showFullName: Bool,
+         showBase: Bool,
          defaultAutoAccept: Bool,
          onOffer: ((Person, StayOverlap, Bool) -> Void)?, onPass: ((Person) -> Void)?,
          onReport: @escaping (Person, ReportReason, String) async -> String?, onBlock: @escaping (Person) async -> Void) {
@@ -42,6 +53,7 @@ struct PersonCardView: View {
         self.overlap = overlap
         self.offerStatus = offerStatus
         self.showFullName = showFullName
+        self.showBase = showBase
         self.defaultAutoAccept = defaultAutoAccept
         self.onOffer = onOffer
         self.onPass = onPass
@@ -70,7 +82,9 @@ struct PersonCardView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(person.airline) / \(person.base)").font(.system(size: 14, weight: .bold))
+                if let affiliationLine {
+                    Text(affiliationLine).font(.system(size: 14, weight: .bold))
+                }
                 Text("(\(person.displayName(showFullName: showFullName)))")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)

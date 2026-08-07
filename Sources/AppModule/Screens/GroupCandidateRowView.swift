@@ -17,7 +17,9 @@ struct GroupCandidateRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(person.role).splitFlap(12, weight: .bold).foregroundStyle(Theme.amber)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("\(person.airline) / \(person.base)").font(.system(size: 14, weight: .bold))
+                        if !person.airline.isEmpty {
+                            Text(person.airline).font(.system(size: 14, weight: .bold))
+                        }
                         Text("(\(person.displayName(showFullName: showFullName)))")
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.faint)

@@ -26,6 +26,13 @@ private struct StrangersSearchView: View {
     @State private var filterRole = "ALL"
     @State private var tabMode: OfferTabMode = .individual
 
+    /// Only candidates who actually share a free day/airport with me — a
+    /// candidate with no overlap has nothing to offer on, so surfacing them
+    /// here was just noise.
+    private var matchingCandidates: [Person] {
+        store.strangerCandidates.filter { !(store.overlapCache[$0.id] ?? []).isEmpty }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             OfferTabModeSwitcher(mode: $tabMode)
@@ -46,19 +53,20 @@ private struct StrangersSearchView: View {
                     roleFilterMenu
                 }
 
-                if store.strangerCandidates.isEmpty {
-                    Text("候補はすべて確認済みです。")
+                if matchingCandidates.isEmpty {
+                    Text("現在、予定が重なる新しい人はいません。")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.faint)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                 } else {
-                    ForEach(store.strangerCandidates) { person in
+                    ForEach(matchingCandidates) { person in
                         PersonCardView(
                             person: person,
                             overlap: store.overlapCache[person.id] ?? [],
                             offerStatus: store.status(for: person.id),
                             showFullName: false,
+                            showBase: false,
                             defaultAutoAccept: false,
                             onOffer: { person, overlap, autoAccept in
                                 Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }

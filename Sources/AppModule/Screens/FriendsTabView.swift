@@ -55,6 +55,7 @@ struct FriendsTabView: View {
                         overlap: store.overlapCache[person.id] ?? [],
                         offerStatus: store.status(for: person.id),
                         showFullName: true,
+                        showBase: true,
                         defaultAutoAccept: true,
                         onOffer: nil,
                         onPass: nil,
