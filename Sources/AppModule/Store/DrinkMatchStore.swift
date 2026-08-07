@@ -170,7 +170,7 @@ final class DrinkMatchStore {
             baseAirport: input.base,
             fullName: input.fullName,
             ageConfirmed: ageConfirmed,
-            airline: nil,
+            airline: input.airline,
             yearsOfService: nil,
             note: nil,
             displayMode: input.displayMode.rawValue,

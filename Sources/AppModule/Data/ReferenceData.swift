@@ -49,6 +49,31 @@ enum Bases {
     static let all = ["HND", "NRT", "KIX", "ITM", "CTS", "FUK", "OKA", "NGO"]
 }
 
+enum Airlines {
+    static let all: [Airline] = [
+        Airline(code: "ANA", name: "全日本空輸"),
+        Airline(code: "JAL", name: "日本航空"),
+        Airline(code: "AKX", name: "ANAウイングス"),
+        Airline(code: "JAC", name: "日本エアコミューター"),
+        Airline(code: "JTA", name: "日本トランスオーシャン航空"),
+        Airline(code: "RAC", name: "琉球エアコミューター"),
+        Airline(code: "JLJ", name: "ジェイエア"),
+        Airline(code: "HAC", name: "北海道エアシステム"),
+        Airline(code: "SKY", name: "スカイマーク"),
+        Airline(code: "ADO", name: "AIRDO"),
+        Airline(code: "SFJ", name: "スターフライヤー"),
+        Airline(code: "SNJ", name: "ソラシドエア"),
+        Airline(code: "IBX", name: "アイベックスエアラインズ"),
+        Airline(code: "FDA", name: "フジドリームエアラインズ"),
+        Airline(code: "ORC", name: "オリエンタルエアブリッジ"),
+        Airline(code: "APJ", name: "ピーチ・アビエーション"),
+        Airline(code: "JJP", name: "ジェットスター・ジャパン"),
+        Airline(code: "SJO", name: "スプリング・ジャパン"),
+        Airline(code: "TZP", name: "ZIPAIR Tokyo"),
+        Airline(code: "NCA", name: "日本貨物航空"),
+    ]
+}
+
 enum StayAirports {
     static let all: [Airport] = [
         // 北海道

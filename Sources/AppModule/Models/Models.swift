@@ -14,6 +14,13 @@ struct Airport: Identifiable, Hashable {
     var id: String { code }
 }
 
+/// A selectable employer airline, identified by its 3-letter ICAO code.
+struct Airline: Identifiable, Hashable {
+    var code: String
+    var name: String
+    var id: String { code }
+}
+
 /// One "day off" entry in a user's monthly schedule: where they'll be
 /// staying and from what time they're free to meet up.
 struct StayEntry: Identifiable, Hashable {
@@ -158,6 +165,7 @@ struct UserProfile {
     var fullName: String
     var displayMode: DisplayMode
     var nickname: String
+    var airline: String = ""
 
     /// Name shown to strangers: nickname if chosen, otherwise generated initials.
     var strangerDisplayName: String {

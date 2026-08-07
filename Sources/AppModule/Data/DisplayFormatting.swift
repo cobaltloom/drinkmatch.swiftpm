@@ -8,6 +8,14 @@ func airportLabel(_ code: String) -> String {
     "\(code) (\(airportName(code)))"
 }
 
+func airlineName(_ code: String) -> String {
+    Airlines.all.first { $0.code == code }?.name ?? code
+}
+
+func airlineLabel(_ code: String) -> String {
+    "\(code) (\(airlineName(code)))"
+}
+
 func initials(from fullName: String) -> String {
     let parts = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
         .split(separator: " ")

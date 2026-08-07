@@ -6,6 +6,7 @@ struct ProfileSetupView: View {
     var onDone: (UserProfile, Bool) -> Void
 
     @State private var role = Roles.all[2].code // CA
+    @State private var airline = ""
     @State private var base = ""
     @State private var fullName = ""
     @State private var displayMode: DisplayMode = .initials
@@ -23,7 +24,8 @@ struct ProfileSetupView: View {
     }
 
     private var canSubmit: Bool {
-        !base.isEmpty
+        !airline.isEmpty
+            && !base.isEmpty
             && (displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty)
             && ageConfirmed
     }
@@ -56,6 +58,9 @@ struct ProfileSetupView: View {
                             )
                     }
                 }
+
+                Text("会社").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
+                AirlineAutocompleteField(code: $airline)
 
                 Text("拠点空港").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
                 AirportAutocompleteField(code: $base)
@@ -110,7 +115,7 @@ struct ProfileSetupView: View {
                 .padding(.top, 18)
 
                 Button("プロフィールを作成して始める") {
-                    let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname)
+                    let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname, airline: airline)
                     onDone(profile, ageConfirmed)
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: !canSubmit))

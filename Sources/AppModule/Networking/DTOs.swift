@@ -173,7 +173,7 @@ struct UserRow: Decodable {
     var isVerified: Bool { verificationMethod != nil }
 
     var asUserProfile: UserProfile {
-        UserProfile(role: role, base: baseAirport, fullName: fullName, displayMode: displayMode, nickname: nickname ?? "")
+        UserProfile(role: role, base: baseAirport, fullName: fullName, displayMode: displayMode, nickname: nickname ?? "", airline: airline ?? "")
     }
 
     var asPerson: Person {
