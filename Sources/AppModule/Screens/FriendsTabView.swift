@@ -2,12 +2,21 @@ import SwiftUI
 
 /// "知り合いから探す" — free, no-verification matching against friends
 /// added via invite code.
+///
+/// No invite/accept flow here at all (individual or group) — friends are
+/// assumed to already have each other's contact info (LINE, etc.), so this
+/// screen is just for seeing who else is free when you are and adding new
+/// friends by invite code; coordinating a meetup happens outside the app.
+/// The group-offer flow (OfferTabModeSwitcher/GroupOrganizerView) exists
+/// purely to submit an invite, so unlike PersonCardView's overlap listing
+/// it has nothing left to show once that action is gone — StrangersTabView
+/// still uses it, since strangers still need the in-app invite/accept
+/// handshake.
 struct FriendsTabView: View {
     var store: DrinkMatchStore
 
     @State private var code = ""
     @State private var errorMessage = ""
-    @State private var tabMode: OfferTabMode = .individual
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -33,19 +42,7 @@ struct FriendsTabView: View {
 
             InviteCodeGeneratorView(codes: store.myInviteCodes, onGenerate: { Task { await store.generateInviteCode() } })
 
-            OfferTabModeSwitcher(mode: $tabMode)
-
-            if tabMode == .group {
-                GroupOrganizerView(
-                    mySchedule: store.mySchedule,
-                    candidates: store.friends,
-                    showFullName: true,
-                    overlapByCandidateID: store.overlapCache,
-                    onSubmit: { day, location, members, autoAccept in
-                        Task { await store.createGroupOffer(day: day, location: location, members: members, autoAccept: autoAccept) }
-                    }
-                )
-            } else if store.friends.isEmpty {
+            if store.friends.isEmpty {
                 Text("まだ知り合いが登録されていません。")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
