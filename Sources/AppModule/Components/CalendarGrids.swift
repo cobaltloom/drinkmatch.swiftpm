@@ -51,7 +51,7 @@ struct ScheduleCalendarPicker: View {
                 ForEach(monthCells(year: year, month: month), id: \.self) { cell in
                     switch cell {
                     case .blank:
-                        Color.clear.frame(maxWidth: .infinity).aspectRatio(1, contentMode: .fill)
+                        dayCell(0).hidden()
                     case .day(let day):
                         dayCell(day)
                     }
@@ -60,6 +60,13 @@ struct ScheduleCalendarPicker: View {
         }
     }
 
+    /// `.hidden()` rather than `Color.clear`: a blank slot needs to take up
+    /// exactly the same space as a real day cell, and the only way to
+    /// guarantee that is to size it the same way — with the same Text and
+    /// the same frame/aspectRatio chain — since Color has no text to size
+    /// against and resolved inconsistently against real day cells in a
+    /// partial first week (days 1-6 vanishing/misaligned depending on the
+    /// month). `day: 0` is never a real day, just a placeholder value.
     private func dayCell(_ day: Int) -> some View {
         let isSelected = selectedDays.contains(day)
         let isPast = BoardCalendar.isPastDay(year: year, month: month, day: day)
@@ -101,7 +108,7 @@ struct ReadOnlyStayCalendar: View {
                 ForEach(monthCells(year: BoardCalendar.year, month: BoardCalendar.month), id: \.self) { cell in
                     switch cell {
                     case .blank:
-                        Color.clear.frame(maxWidth: .infinity).aspectRatio(1, contentMode: .fill)
+                        dayCell(0).hidden()
                     case .day(let day):
                         dayCell(day)
                     }
