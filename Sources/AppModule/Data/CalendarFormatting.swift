@@ -43,10 +43,28 @@ enum BoardCalendar {
     static var leadingBlankCount: Int { leadingBlankCount(year: year, month: month) }
 
     static let weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"]
+
+    /// True if (year, month, day) is strictly before today's real calendar
+    /// date — used to block editing schedule entries that have already
+    /// passed (see ScheduleCalendarPicker/ScheduleSetupView).
+    static func isPastDay(year: Int, month: Int, day: Int, today: Date = Date()) -> Bool {
+        let calendar = Calendar(identifier: .gregorian)
+        guard let target = calendar.date(from: DateComponents(year: year, month: month, day: day)) else {
+            return false
+        }
+        return calendar.startOfDay(for: target) < calendar.startOfDay(for: today)
+    }
 }
 
 func dateLabel(_ day: Int) -> String {
-    "\(BoardCalendar.month)/\(day)"
+    dateLabel(month: BoardCalendar.month, day: day)
+}
+
+/// Same as `dateLabel(_:)`, but for callers juggling a specific navigated
+/// month instead of the app-wide default — currently just the schedule
+/// editor (see `ScheduleSetupView`/`StayEntryEditorView`).
+func dateLabel(month: Int, day: Int) -> String {
+    "\(month)/\(day)"
 }
 
 /// The later (i.e. more restrictive / safer) of two "available from" times,

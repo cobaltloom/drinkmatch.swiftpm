@@ -6,6 +6,10 @@ import SwiftUI
 struct StayEntryEditorView: View {
     @Binding var entry: StayEntry
     var friends: [Person]
+    /// The schedule editor's currently-navigated month — needed here only
+    /// to label the row correctly, since `entry.day` is a bare day-of-month
+    /// int with no month of its own (see ScheduleSetupView).
+    var month: Int
     var onRemove: () -> Void
 
     @State private var showingHideOptions = false
@@ -22,7 +26,7 @@ struct StayEntryEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(dateLabel(entry.day))
+                Text(dateLabel(month: month, day: entry.day))
                     .splitFlap(12, weight: .semibold)
                     .foregroundStyle(Theme.amber)
                     .frame(width: 44, alignment: .leading)

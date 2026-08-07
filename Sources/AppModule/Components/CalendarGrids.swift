@@ -35,15 +35,17 @@ struct ScheduleCalendarPicker: View {
                 }
                 ForEach(1...BoardCalendar.daysInMonth(year: year, month: month), id: \.self) { day in
                     let isSelected = selectedDays.contains(day)
+                    let isPast = BoardCalendar.isPastDay(year: year, month: month, day: day)
                     Button {
                         onToggle(day)
                     } label: {
                         Text("\(day)")
                             .font(.system(size: 14, design: .monospaced))
-                            .foregroundStyle(isSelected ? Theme.amber : Theme.muted)
+                            .foregroundStyle(isSelected ? Theme.amber : (isPast ? Theme.faint : Theme.muted))
                             .frame(maxWidth: .infinity)
                             .aspectRatio(1, contentMode: .fill)
                             .background(isSelected ? Theme.amberBackground : Theme.field)
+                            .opacity(isPast ? 0.4 : 1)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -51,6 +53,7 @@ struct ScheduleCalendarPicker: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .disabled(isPast)
                 }
             }
         }

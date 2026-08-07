@@ -49,6 +49,19 @@ struct ScheduleSetupView: View {
         !entries.isEmpty && entries.allSatisfy { !$0.location.trimmingCharacters(in: .whitespaces).isEmpty }
     }
 
+    /// Blocks "◀" once the displayed month is today's real calendar month —
+    /// there's never a legitimate reason to edit a month that's entirely in
+    /// the past, and this is what stops the confusing case where entering
+    /// days in an already-past month like navigating back to July while
+    /// today is in August (see BoardCalendar's 25th-cutoff default, which
+    /// only handles the *default* month, not this navigation).
+    private var canGoToPreviousMonth: Bool {
+        let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date())
+        guard let todayYear = comps.year, let todayMonth = comps.month else { return true }
+        if year != todayYear { return year > todayYear }
+        return month > todayMonth
+    }
+
     var body: some View {
         BoardScreenContainer {
             Button("← ホームに戻る") { onCancel() }
@@ -80,7 +93,7 @@ struct ScheduleSetupView: View {
                         .foregroundStyle(Theme.faint)
                         .padding(.bottom, 8)
                     ForEach($entries) { $entry in
-                        StayEntryEditorView(entry: $entry, friends: friends, onRemove: { toggleDay(entry.day) })
+                        StayEntryEditorView(entry: $entry, friends: friends, month: month, onRemove: { toggleDay(entry.day) })
                     }
                 }
                 .padding(.bottom, 14)
@@ -108,7 +121,7 @@ struct ScheduleSetupView: View {
             } label: {
                 Image(systemName: "chevron.left")
             }
-            .disabled(isLoadingMonth)
+            .disabled(isLoadingMonth || !canGoToPreviousMonth)
 
             Spacer()
 
