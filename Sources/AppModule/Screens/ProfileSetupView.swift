@@ -6,7 +6,7 @@ struct ProfileSetupView: View {
     var onDone: (UserProfile, Bool) -> Void
 
     @State private var role = Roles.all[2].code // CA
-    @State private var base = Bases.all[0]
+    @State private var base = ""
     @State private var fullName = ""
     @State private var displayMode: DisplayMode = .initials
     @State private var nickname = ""
@@ -23,7 +23,9 @@ struct ProfileSetupView: View {
     }
 
     private var canSubmit: Bool {
-        (displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty) && ageConfirmed
+        !base.isEmpty
+            && (displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty)
+            && ageConfirmed
     }
 
     var body: some View {
