@@ -32,7 +32,7 @@ struct ProfileSetupView: View {
         BoardScreenContainer {
             VStack(spacing: 4) {
                 Text("CREW BOARD").splitFlap(28, weight: .bold).foregroundStyle(Theme.amber)
-                Text("航空従事者限定・飲み会マッチング")
+                Text("ステイ先でご飯")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.muted)
             }
