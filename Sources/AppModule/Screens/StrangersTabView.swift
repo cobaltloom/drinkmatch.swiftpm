@@ -21,18 +21,44 @@ struct StrangersTabView: View {
     }
 }
 
+/// Same-company preference for stranger search — some users want to avoid
+/// being matched with colleagues from their own airline, others want the
+/// opposite (e.g. specifically looking to meet up with them).
+private enum CompanyFilter: CaseIterable {
+    case any, sameOnly, excludeSame
+
+    var label: String {
+        switch self {
+        case .any: return "会社:指定なし"
+        case .sameOnly: return "同じ会社のみ"
+        case .excludeSame: return "同じ会社を除く"
+        }
+    }
+}
+
 private struct StrangersSearchView: View {
     var store: DrinkMatchStore
 
     @State private var filterBase = "ALL"
     @State private var filterRole = "ALL"
+    @State private var companyFilter: CompanyFilter = .any
     @State private var tabMode: OfferTabMode = .individual
 
     /// Only candidates who actually share a free day/airport with me — a
     /// candidate with no overlap has nothing to offer on, so surfacing them
-    /// here was just noise.
+    /// here was just noise. Also applies the same-company preference: a
+    /// candidate with no airline on file can't be confirmed either way, so
+    /// "同じ会社のみ" excludes them (unconfirmed isn't a match) while
+    /// "同じ会社を除く" keeps them (unconfirmed isn't excluded either).
     private var matchingCandidates: [Person] {
-        store.strangerCandidates.filter { !(store.overlapCache[$0.id] ?? []).isEmpty }
+        store.strangerCandidates.filter { candidate in
+            guard !(store.overlapCache[candidate.id] ?? []).isEmpty else { return false }
+            switch companyFilter {
+            case .any: return true
+            case .sameOnly: return !candidate.airline.isEmpty && candidate.airline == store.profile?.airline
+            case .excludeSame: return candidate.airline.isEmpty || candidate.airline != store.profile?.airline
+            }
+        }
     }
 
     var body: some View {
@@ -54,6 +80,8 @@ private struct StrangersSearchView: View {
                     AirportAutocompleteField(code: $filterBase, placeholder: "拠点で絞り込み", allowAll: true)
                     roleFilterMenu
                 }
+
+                companyFilterMenu
 
                 if matchingCandidates.isEmpty {
                     Text("現在、予定が重なる新しい人はいません。")
@@ -85,6 +113,26 @@ private struct StrangersSearchView: View {
         }
         .task(id: "\(filterBase)|\(filterRole)") {
             await store.loadStrangerCandidates(baseAirport: filterBase, role: filterRole)
+        }
+    }
+
+    private var companyFilterMenu: some View {
+        Menu {
+            ForEach(CompanyFilter.allCases, id: \.self) { option in
+                Button(option.label) { companyFilter = option }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(companyFilter.label)
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 9))
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(Theme.text)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
         }
     }
 
