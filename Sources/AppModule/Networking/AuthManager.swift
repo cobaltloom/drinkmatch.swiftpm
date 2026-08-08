@@ -21,6 +21,7 @@ actor AuthManager {
     }
 
     var currentUserID: UUID? { session?.userID }
+    var currentUserEmail: String? { session?.email }
 
     func signInWithApple(idToken: String) async throws -> UUID {
         let response = try await Self.exchange(grantType: "id_token", body: IDTokenBody(provider: "apple", idToken: idToken))
@@ -53,7 +54,8 @@ actor AuthManager {
             accessToken: accessToken,
             refreshToken: refreshToken,
             expiresAt: Date(timeIntervalSince1970: TimeInterval(expiresAt)),
-            userID: user.id
+            userID: user.id,
+            email: user.email
         )
         session = newSession
         KeychainStore.save(newSession)
@@ -119,7 +121,8 @@ actor AuthManager {
             accessToken: response.accessToken,
             refreshToken: response.refreshToken,
             expiresAt: Date(timeIntervalSince1970: TimeInterval(response.expiresAt)),
-            userID: response.user.id
+            userID: response.user.id,
+            email: response.user.email
         )
     }
 
@@ -165,7 +168,7 @@ actor AuthManager {
         var expiresAt: Int
         var user: UserInfo
 
-        struct UserInfo: Decodable { var id: UUID }
+        struct UserInfo: Decodable { var id: UUID; var email: String? }
 
         enum CodingKeys: String, CodingKey {
             case accessToken = "access_token"

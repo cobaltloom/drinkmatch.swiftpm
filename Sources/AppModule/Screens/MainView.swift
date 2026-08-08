@@ -5,6 +5,7 @@ import SwiftUI
 struct MainView: View {
     @Bindable var store: DrinkMatchStore
 
+    @State private var showingProfileInfo = false
     @State private var showingBlockedUsers = false
     @State private var showingDeleteAccount = false
 
@@ -39,6 +40,7 @@ struct MainView: View {
                     Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
                         .buttonStyle(BoardChromeButtonStyle())
                     Menu {
+                        Button("プロフィール") { showingProfileInfo = true }
                         Button("ブロック中のユーザー") { showingBlockedUsers = true }
                         Button("サインアウト", role: .destructive) { Task { await store.signOut() } }
                         Button("アカウントを削除", role: .destructive) { showingDeleteAccount = true }
@@ -99,6 +101,9 @@ struct MainView: View {
         .task {
             await store.loadNotifications()
             if store.isVerified { await store.loadMyReferralCodes() }
+        }
+        .sheet(isPresented: $showingProfileInfo) {
+            ProfileInfoView(store: store)
         }
         .sheet(isPresented: $showingBlockedUsers) {
             BlockedUsersView(store: store)

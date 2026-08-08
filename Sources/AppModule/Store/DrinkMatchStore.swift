@@ -11,6 +11,10 @@ import StoreKit
 @Observable
 final class DrinkMatchStore {
     var authUserID: UUID?
+    /// The email address this session is signed in with — surfaced in
+    /// ProfileInfoView since Sign in with Apple's account picker doesn't
+    /// otherwise make it obvious which address is currently active.
+    var authEmail: String?
     var isBootstrapping = true
 
     var profile: UserProfile?
@@ -60,6 +64,7 @@ final class DrinkMatchStore {
     func bootstrap() async {
         if let userID = await AuthManager.shared.currentUserID {
             authUserID = userID
+            authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
         }
         isBootstrapping = false
@@ -69,6 +74,7 @@ final class DrinkMatchStore {
         do {
             let userID = try await SupabaseRepository.signInWithApple(idToken: idToken)
             authUserID = userID
+            authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
         } catch {
             lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
@@ -85,6 +91,7 @@ final class DrinkMatchStore {
                 return "確認メールを送信しました。メール内のリンクを開いてから「テストログイン」でサインインしてください。"
             }
             authUserID = userID
+            authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
             return nil
         } catch {
@@ -96,6 +103,7 @@ final class DrinkMatchStore {
         do {
             let userID = try await SupabaseRepository.signInWithEmail(email: email, password: password)
             authUserID = userID
+            authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
             return nil
         } catch {
@@ -144,6 +152,7 @@ final class DrinkMatchStore {
         myInviteCodes = []
         blockedUsers = []
         screen = .profile
+        authEmail = nil
     }
 
     private func loadAfterSignIn(userID: UUID) async {

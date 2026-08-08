@@ -8,4 +8,7 @@ struct AuthSessionData: Codable {
     var refreshToken: String
     var expiresAt: Date
     var userID: UUID
+    /// Optional so existing Keychain entries saved before this field existed
+    /// still decode fine (missing key → nil) rather than losing the session.
+    var email: String?
 }
