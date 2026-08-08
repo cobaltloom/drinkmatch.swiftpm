@@ -197,6 +197,22 @@ final class DrinkMatchStore {
         }
     }
 
+    /// Required before "新しい人を探す" unlocks (see StrangersTabView's
+    /// AirlineRequiredGateView) even though onboarding leaves it optional —
+    /// asking for it upfront was too high a bar for people just trying the
+    /// friends-matching feature.
+    func updateAirline(_ airline: String) async {
+        guard let userID = authUserID else { return }
+        let previous = profile?.airline
+        profile?.airline = airline
+        do {
+            try await SupabaseRepository.updateAirline(userID: userID, airline: airline)
+        } catch {
+            profile?.airline = previous ?? ""
+            lastErrorMessage = "会社の更新に失敗しました。"
+        }
+    }
+
     func updateDisplayPreference(displayMode: DisplayMode, nickname: String) async {
         guard let userID = authUserID else { return }
         do {

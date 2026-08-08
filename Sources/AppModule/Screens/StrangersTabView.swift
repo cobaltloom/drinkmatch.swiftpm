@@ -6,7 +6,9 @@ struct StrangersTabView: View {
     var store: DrinkMatchStore
 
     var body: some View {
-        if !store.isVerified {
+        if (store.profile?.airline ?? "").isEmpty {
+            AirlineRequiredGateView(onSubmit: { airline in await store.updateAirline(airline) })
+        } else if !store.isVerified {
             EmailVerifyGateView(
                 onSubmitEmail: { email in await store.verifyEmail(email) },
                 onSubmitReferralCode: { code in await store.redeemReferralCodeForVerification(code) }

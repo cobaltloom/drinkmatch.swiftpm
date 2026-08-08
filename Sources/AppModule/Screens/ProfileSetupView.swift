@@ -24,8 +24,7 @@ struct ProfileSetupView: View {
     }
 
     private var canSubmit: Bool {
-        !airline.isEmpty
-            && !base.isEmpty
+        !base.isEmpty
             && (displayMode == .nickname ? !trimmedNickname.isEmpty : !trimmedFullName.isEmpty)
             && ageConfirmed
     }
@@ -59,7 +58,7 @@ struct ProfileSetupView: View {
                     }
                 }
 
-                Text("会社").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
+                Text("会社(任意・新しい人を探す機能を使う際に必須)").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
                 AirlineAutocompleteField(code: $airline)
 
                 Text("拠点空港").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)

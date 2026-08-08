@@ -62,6 +62,11 @@ enum SupabaseRepository {
         try await PostgREST.update("users", Patch(role: role), filters: [RestClient.eq("id", userID)])
     }
 
+    static func updateAirline(userID: UUID, airline: String) async throws {
+        struct Patch: Encodable { var airline: String }
+        try await PostgREST.update("users", Patch(airline: airline), filters: [RestClient.eq("id", userID)])
+    }
+
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {
         struct Patch: Encodable {
             var displayMode: String
