@@ -45,10 +45,6 @@ enum Roles {
     }
 }
 
-enum Bases {
-    static let all = ["HND", "NRT", "KIX", "ITM", "CTS", "FUK", "OKA", "NGO"]
-}
-
 enum Airlines {
     static let all: [Airline] = [
         Airline(code: "ANA", name: "全日本空輸"),

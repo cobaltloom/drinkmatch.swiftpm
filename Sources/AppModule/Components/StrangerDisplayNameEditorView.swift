@@ -32,7 +32,7 @@ struct StrangerDisplayNameEditorView: View {
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.cardBorder))
         } label: {
             HStack(spacing: 0) {
-                Text("新規マッチングでの表示名: ")
+                Text("新しい人を探すでの表示名: ")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
                 Text(profile.strangerDisplayName.isEmpty ? "(未入力)" : profile.strangerDisplayName)

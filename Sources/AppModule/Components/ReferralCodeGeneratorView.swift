@@ -14,7 +14,7 @@ struct ReferralCodeGeneratorView: View {
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("会社メールを持たない後輩・知人が新規マッチング機能を使えるように、紹介コードを発行できます(1人あたり\(maxReferralCodesPerUser)件まで)。")
+                Text("会社メールを持たない後輩・知人が新しい人を探す機能を使えるように、紹介コードを発行できます(1人あたり\(maxReferralCodesPerUser)件まで)。")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
                     .fixedSize(horizontal: false, vertical: true)

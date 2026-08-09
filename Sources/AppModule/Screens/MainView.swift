@@ -11,7 +11,7 @@ struct MainView: View {
 
     private var profileBinding: Binding<UserProfile> {
         Binding(
-            get: { store.profile ?? UserProfile(role: Roles.all[0].code, base: Bases.all[0], fullName: "", displayMode: .initials, nickname: "") },
+            get: { store.profile ?? UserProfile(role: Roles.all[0].code, base: StayAirports.all[0].code, fullName: "", displayMode: .initials, nickname: "") },
             set: { newValue in
                 let old = store.profile
                 store.profile = newValue

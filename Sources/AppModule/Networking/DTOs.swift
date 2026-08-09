@@ -92,17 +92,6 @@ struct CreateGroupOfferParams: Encodable {
     }
 }
 
-// MARK: - Edge Function payloads
-//
-// Unlike the RPC params above, these bodies go to our own Edge Functions
-// (drinkmatch-backend's supabase/functions/), not PostgREST — there's no
-// `p_`-prefixed snake_case convention to match, so property names are
-// whatever the corresponding index.ts reads.
-
-struct VerifyPurchaseBody: Encodable {
-    var transactionJWS: String
-}
-
 struct BlockUserParams: Encodable {
     var userId: UUID
     enum CodingKeys: String, CodingKey { case userId = "p_user_id" }
@@ -138,6 +127,17 @@ struct SendProposalParams: Encodable {
         case offerId = "p_offer_id"
         case groupOfferId = "p_group_offer_id"
     }
+}
+
+// MARK: - Edge Function payloads
+//
+// Unlike the RPC params above, these bodies go to our own Edge Functions
+// (drinkmatch-backend's supabase/functions/), not PostgREST — there's no
+// `p_`-prefixed snake_case convention to match, so property names are
+// whatever the corresponding index.ts reads.
+
+struct VerifyPurchaseBody: Encodable {
+    var transactionJWS: String
 }
 
 // MARK: - Row payloads

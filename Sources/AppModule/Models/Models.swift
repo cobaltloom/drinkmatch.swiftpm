@@ -196,7 +196,8 @@ enum MatchMode: String, CaseIterable, Hashable {
     case strangers
 }
 
-/// 1-on-1 vs. group-offer sub-tab, shared by both matching modes.
+/// 1-on-1 vs. group-offer sub-tab within the strangers tab (see
+/// OfferTabModeSwitcher) — friends have no offer flow.
 enum OfferTabMode: String, CaseIterable, Hashable {
     case individual
     case group

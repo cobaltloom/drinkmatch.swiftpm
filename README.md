@@ -128,14 +128,14 @@ Store Connect.
     so nothing outside this folder changed), `NetworkConversions.swift`
     (day-of-month ↔ SQL `date`, "HH:mm" ↔ SQL `time`, and backend
     error-code matching).
-- `Sources/AppModule/Store/AppStore.swift` — `@MainActor @Observable` app
+- `Sources/AppModule/Store/DrinkMatchStore.swift` — `@MainActor @Observable` app
   state and the async operations views call; checks for a persisted session
   at launch (`bootstrap()`) rather than listening to a continuous
   auth-state stream (there isn't one without the SDK), and (started as a
   second, independent `.task` from RootView) runs a `Transaction.updates`
   loop that keeps subscription state in sync with StoreKit.
 - `Sources/AppModule/Billing/StoreKitManager.swift` — the StoreKit 2 side of
-  purchasing/restoring the subscription; `AppStore` owns the resulting state
+  purchasing/restoring the subscription; `DrinkMatchStore` owns the resulting state
   and calls `SupabaseRepository.verifyPurchase` to have
   drinkmatch-backend's `verify-purchase` Edge Function confirm the purchase
   before `isSubscribed` actually flips (StoreKit alone can't be trusted for
@@ -144,7 +144,7 @@ Store Connect.
   `@UIApplicationDelegateAdaptor` bridge in `DrinkMatchApp.swift` needs for
   `didRegisterForRemoteNotificationsWithDeviceToken` — SwiftUI's App
   protocol has no equivalent) and `PushNotificationManager.swift` (turns
-  the resulting token into what `AppStore.enablePushNotifications` sends to
+  the resulting token into what `DrinkMatchStore.enablePushNotifications` sends to
   drinkmatch-backend). Built but not currently wired up to any view — see
   "Not done yet".
 - `Sources/AppModule/Screens/`, `Components/` — unchanged in structure from
@@ -192,7 +192,7 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   with user-to-user interaction): a flag icon on `PersonCardView` and on a
   match's detail pane in `MatchesView` opens `ReportBlockSheet` (reason
   picker + optional details, plus an independent "ブロックする" action).
-  Blocking calls `AppStore.blockUser`, which removes the person from
+  Blocking calls `DrinkMatchStore.blockUser`, which removes the person from
   friends/candidates/matches locally and from every enforcement point
   server-side (`is_blocked`, see drinkmatch-backend's README "Report/block").
   Blocked users are managed from MainView's overflow menu →
@@ -205,7 +205,7 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
 - **Account deletion** (App Store Review Guideline 5.1.1(v) — required for
   any app with account creation): MainView's overflow menu →
   "アカウントを削除" opens `DeleteAccountView`, a confirmation screen that
-  calls `AppStore.deleteAccount()` → drinkmatch-backend's
+  calls `DrinkMatchStore.deleteAccount()` → drinkmatch-backend's
   `delete_own_account()` RPC, then signs out locally (deleting the row
   server-side doesn't itself invalidate the client's session token). See
   drinkmatch-backend's README "Account deletion" for the cascade and a
@@ -222,7 +222,7 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
 
 - **Push notifications — implemented but disabled.**
   `Notifications/AppDelegate.swift` + `PushNotificationManager.swift` +
-  `AppStore.enablePushNotifications` are a complete, working device-token
+  `DrinkMatchStore.enablePushNotifications` are a complete, working device-token
   registration path (writes to `push_tokens` via
   `SupabaseRepository.registerPushToken`, which drinkmatch-backend's
   `deliver-push-notification` Edge Function reads — see its README "Push

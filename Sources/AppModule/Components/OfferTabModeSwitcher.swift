@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Shared "1対1で誘う / グループを作る" switcher used by both the friends
-/// and strangers tabs.
+/// "1対1で誘う / グループを作る" switcher used by the strangers tab
+/// (StrangersTabView) — friends have no offer flow, see FriendsTabView.
 struct OfferTabModeSwitcher: View {
     @Binding var mode: OfferTabMode
 
