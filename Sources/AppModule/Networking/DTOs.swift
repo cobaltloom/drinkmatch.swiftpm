@@ -187,16 +187,18 @@ struct ScheduleEntryRow: Decodable {
     var day: String
     var airportCode: String
     var availableFrom: String
+    var visibleToStrangers: Bool
 
     enum CodingKeys: String, CodingKey {
         case id, day
         case airportCode = "airport_code"
         case availableFrom = "available_from"
+        case visibleToStrangers = "visible_to_strangers"
     }
 
     var asStayEntry: StayEntry? {
         guard let dayOfMonth = dayOfMonth(fromPostgresDate: day) else { return nil }
-        return StayEntry(day: dayOfMonth, location: airportCode, from: clientTimeString(fromPostgresTime: availableFrom))
+        return StayEntry(day: dayOfMonth, location: airportCode, from: clientTimeString(fromPostgresTime: availableFrom), visibleToStrangers: visibleToStrangers)
     }
 }
 
@@ -403,11 +405,13 @@ struct ScheduleEntryInsert: Encodable {
     var day: String
     var airportCode: String
     var availableFrom: String
+    var visibleToStrangers: Bool
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case day
         case airportCode = "airport_code"
         case availableFrom = "available_from"
+        case visibleToStrangers = "visible_to_strangers"
     }
 }
 

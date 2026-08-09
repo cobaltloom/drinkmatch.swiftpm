@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// One row in the schedule editor: a selected off-day with its stay airport,
-/// the time the user is free from, and (for friends only) a per-day
-/// visibility toggle.
+/// the time the user is free from, a per-day opt-in for stranger visibility
+/// (off by default — see StayEntry.visibleToStrangers), and a per-day
+/// hide-from-specific-friends toggle.
 struct StayEntryEditorView: View {
     @Binding var entry: StayEntry
     var friends: [Person]
@@ -62,6 +63,18 @@ struct StayEntryEditorView: View {
                 }
                 .font(.system(size: 11))
                 .foregroundStyle(isAllDay ? Theme.amber : Theme.muted)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                entry.visibleToStrangers.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: entry.visibleToStrangers ? "checkmark.square.fill" : "square")
+                    Text("この日は新しい人にも見せる")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(entry.visibleToStrangers ? Theme.amber : Theme.muted)
             }
             .buttonStyle(.plain)
 

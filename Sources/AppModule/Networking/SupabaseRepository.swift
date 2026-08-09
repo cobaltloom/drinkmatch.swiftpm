@@ -90,7 +90,7 @@ enum SupabaseRepository {
         let end = postgresDateString(year: nextYear, month: nextMonth, forDay: 1)
         return try await PostgREST.select(
             "schedule_entries",
-            columns: "id,day,airport_code,available_from",
+            columns: "id,day,airport_code,available_from,visible_to_strangers",
             filters: [RestClient.eq("user_id", userID), RestClient.gte("day", start), RestClient.lt("day", end)],
             order: "day.asc"
         )
@@ -117,15 +117,16 @@ enum SupabaseRepository {
     /// Upserts one day's entry (unique on `user_id, day`) and replaces its
     /// hidden-from set, returning the row's id for further edits.
     @discardableResult
-    static func upsertScheduleEntry(userID: UUID, year: Int, month: Int, day: Int, location: String, from: String, hiddenFrom: [UUID]) async throws -> UUID {
+    static func upsertScheduleEntry(userID: UUID, year: Int, month: Int, day: Int, location: String, from: String, hiddenFrom: [UUID], visibleToStrangers: Bool) async throws -> UUID {
         let payload = ScheduleEntryInsert(
             userId: userID,
             day: postgresDateString(year: year, month: month, forDay: day),
             airportCode: location,
-            availableFrom: postgresTimeString(fromClientTime: from)
+            availableFrom: postgresTimeString(fromClientTime: from),
+            visibleToStrangers: visibleToStrangers
         )
         let row: ScheduleEntryRow = try await PostgREST.upsertReturningFirst(
-            "schedule_entries", payload, onConflict: "user_id,day", select: "id,day,airport_code,available_from"
+            "schedule_entries", payload, onConflict: "user_id,day", select: "id,day,airport_code,available_from,visible_to_strangers"
         )
 
         try await PostgREST.delete("schedule_visibility_exceptions", filters: [RestClient.eq("schedule_entry_id", row.id)])

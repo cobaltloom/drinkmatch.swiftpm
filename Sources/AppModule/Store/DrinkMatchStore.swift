@@ -275,7 +275,8 @@ final class DrinkMatchStore {
             }
             for entry in entries {
                 let id = try await SupabaseRepository.upsertScheduleEntry(
-                    userID: userID, year: year, month: month, day: entry.day, location: entry.location, from: entry.from, hiddenFrom: entry.hiddenFrom
+                    userID: userID, year: year, month: month, day: entry.day, location: entry.location, from: entry.from,
+                    hiddenFrom: entry.hiddenFrom, visibleToStrangers: entry.visibleToStrangers
                 )
                 scheduleEntryIDs[entry.day] = id
             }

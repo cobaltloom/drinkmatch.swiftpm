@@ -29,6 +29,10 @@ struct StayEntry: Identifiable, Hashable {
     var from: String = "19:00"
     /// Friend user ids this entry is hidden from (friends-matching privacy only).
     var hiddenFrom: [UUID] = []
+    /// Off by default: schedule entries are friends-only unless explicitly
+    /// opted into "新しい人を探す" visibility for that specific day. Enforced
+    /// server-side by `_schedule_overlap()`, not just a display-layer hint.
+    var visibleToStrangers: Bool = false
     var id: Int { day }
 }
 
