@@ -113,7 +113,10 @@ struct SignInView: View {
             if let authError = error as? ASAuthorizationError, authError.code == .canceled {
                 return
             }
-            store.lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
+            // Raw error shown temporarily to diagnose on-device Sign in with
+            // Apple failures — revert to a generic message once it's
+            // confirmed working (same as the dev-only sign-in block above).
+            store.lastErrorMessage = "サインインに失敗しました: \(error)"
         }
     }
 }

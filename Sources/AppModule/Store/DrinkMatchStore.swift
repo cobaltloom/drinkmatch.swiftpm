@@ -77,7 +77,10 @@ final class DrinkMatchStore {
             authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
         } catch {
-            lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
+            // Raw error shown temporarily to diagnose on-device Sign in with
+            // Apple failures — revert to a generic message once it's
+            // confirmed working.
+            lastErrorMessage = "サインインに失敗しました: \(error)"
         }
     }
 
