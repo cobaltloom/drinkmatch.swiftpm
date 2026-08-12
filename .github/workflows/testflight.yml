@@ -1,16 +1,24 @@
 name: TestFlight build (Sign in with Apple entitlement experiment)
 
-# Manual only: Swift Playgrounds' "Add Capability" list has no entry for
-# Sign in with Apple (confirmed against Apple's own App Playground
-# capabilities docs), so the entitlement can't be added on-device. This
-# workflow builds the App Playground package the same way Xcode does,
-# injecting a hand-written entitlements file via CODE_SIGN_ENTITLEMENTS
-# since Package.swift's `.iOSApplication(capabilities:)` list has no case
-# for it either. Whether xcodebuild honors that override for an SPM-defined
-# iOSApplication product (rather than a traditional .xcodeproj target) is
-# the main thing this workflow is here to find out — the entitlement-check
-# step fails fast, before ever attempting the TestFlight upload, if not.
+# Swift Playgrounds' "Add Capability" list has no entry for Sign in with
+# Apple (confirmed against Apple's own App Playground capabilities docs),
+# so the entitlement can't be added on-device. This workflow builds the
+# App Playground package the same way Xcode does, injecting a hand-written
+# entitlements file via CODE_SIGN_ENTITLEMENTS since Package.swift's
+# `.iOSApplication(capabilities:)` list has no case for it either. Whether
+# xcodebuild honors that override for an SPM-defined iOSApplication product
+# (rather than a traditional .xcodeproj target) is the main thing this
+# workflow is here to find out — the entitlement-check step fails fast,
+# before ever attempting the TestFlight upload, if not.
+#
+# Runs on every push to this branch: workflow_dispatch's "Run workflow"
+# button only shows up in GitHub's UI once a workflow file exists on the
+# repo's default branch, which this doesn't (yet) — push avoids that
+# chicken-and-egg problem while this is still being worked out.
 on:
+  push:
+    branches:
+      - claude/crew-board-apple-signin-h1frvn
   workflow_dispatch:
 
 jobs:
