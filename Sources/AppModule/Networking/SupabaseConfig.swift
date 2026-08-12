@@ -5,8 +5,8 @@ import Foundation
 /// grants what Row Level Security allows (see drinkmatch-backend's
 /// `supabase/migrations`). Never put the service_role key here.
 enum SupabaseConfig {
-    static let projectURL = URL(string: "https://YOUR-PROJECT-REF.supabase.co")!
-    static let publishableKey = "YOUR-ANON-OR-PUBLISHABLE-KEY"
+    static let projectURL = URL(string: "https://epgydydystmhjseephvy.supabase.co")!
+    static let publishableKey = "sb_publishable_z7K808C2tF2L1yhYOweYIA_pH5qO10V"
 
     /// Flip this alongside projectURL/publishableKey every time you point
     /// this build at a different Supabase project. Unlike the URL/key
