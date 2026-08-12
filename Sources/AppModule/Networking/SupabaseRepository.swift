@@ -20,14 +20,6 @@ enum SupabaseRepository {
         try await AuthManager.shared.signInWithApple(idToken: idToken)
     }
 
-    static func signUpWithEmail(email: String, password: String) async throws -> UUID? {
-        try await AuthManager.shared.signUpWithEmail(email: email, password: password)
-    }
-
-    static func signInWithEmail(email: String, password: String) async throws -> UUID {
-        try await AuthManager.shared.signInWithEmail(email: email, password: password)
-    }
-
     static func signOut() async throws {
         try await AuthManager.shared.signOut()
     }

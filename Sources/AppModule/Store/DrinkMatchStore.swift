@@ -77,40 +77,7 @@ final class DrinkMatchStore {
             authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
         } catch {
-            // Raw error shown temporarily to diagnose on-device Sign in with
-            // Apple failures — revert to a generic message once it's
-            // confirmed working.
-            lastErrorMessage = "サインインに失敗しました: \(error)"
-        }
-    }
-
-    /// Temporary stand-in for Sign in with Apple while that capability is
-    /// untestable without a paid Apple Developer Program membership — see
-    /// AuthManager.signUpWithEmail. Returns a status/error message to show
-    /// inline, or nil on a session-issuing success.
-    func signUpWithEmail(email: String, password: String) async -> String? {
-        do {
-            guard let userID = try await SupabaseRepository.signUpWithEmail(email: email, password: password) else {
-                return "確認メールを送信しました。メール内のリンクを開いてから「テストログイン」でサインインしてください。"
-            }
-            authUserID = userID
-            authEmail = await AuthManager.shared.currentUserEmail
-            await loadAfterSignIn(userID: userID)
-            return nil
-        } catch {
-            return "登録に失敗しました: \(error)"
-        }
-    }
-
-    func signInWithEmail(email: String, password: String) async -> String? {
-        do {
-            let userID = try await SupabaseRepository.signInWithEmail(email: email, password: password)
-            authUserID = userID
-            authEmail = await AuthManager.shared.currentUserEmail
-            await loadAfterSignIn(userID: userID)
-            return nil
-        } catch {
-            return "サインインに失敗しました: \(error)"
+            lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
         }
     }
 
