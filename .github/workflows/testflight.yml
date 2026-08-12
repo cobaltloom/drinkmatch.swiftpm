@@ -1,4 +1,4 @@
-name: Ad-hoc build (Sign in with Apple entitlement experiment)
+name: Ad-hoc + TestFlight build (Sign in with Apple entitlement experiment)
 
 # Swift Playgrounds' "Add Capability" list has no entry for Sign in with
 # Apple (confirmed against Apple's own App Playground capabilities docs),
@@ -163,6 +163,130 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DrinkMatch-archive
+          path: |
+            build/DrinkMatch.xcarchive
+            build/export
+            entitlements-dump.xml
+            scheme-list.json
+          retention-days: 5
+
+  # Second attempt at Distribution signing for TestFlight, running
+  # independently of the proven ad-hoc/Diawi job above so a failure here
+  # doesn't take that one down too. The first attempt (see git history)
+  # let CODE_SIGN_STYLE=Automatic pick the profile type on its own during
+  # `archive` and got an iOS App Development profile instead of a
+  # Distribution one. This time CODE_SIGN_IDENTITY is pinned explicitly to
+  # "Apple Distribution" and the build configuration to Release, to see
+  # whether that's enough to make xcodebuild request the right kind of
+  # certificate/profile during the archive step itself.
+  testflight-attempt:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Write App Store Connect API key
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/private_keys"
+          printf '%s' "$APPSTORE_PRIVATE_KEY" > "$HOME/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8"
+
+      - name: Resolve scheme name
+        id: scheme
+        run: |
+          xcodebuild -list -json | tee scheme-list.json
+          SCHEME=$(python3 -c "
+          import json
+          d = json.load(open('scheme-list.json'))
+          container = d.get('project') or d.get('workspace') or {}
+          schemes = container.get('schemes', [])
+          print(schemes[0])
+          ")
+          echo "Resolved scheme: $SCHEME"
+          echo "name=$SCHEME" >> "$GITHUB_OUTPUT"
+
+      - name: Archive with Apple Distribution signing identity pinned
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -scheme "${{ steps.scheme.outputs.name }}" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/DrinkMatch.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8" \
+            -authenticationKeyID "$APPSTORE_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+            DEVELOPMENT_TEAM=563XHL5ZLR \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_ENTITLEMENTS="$GITHUB_WORKSPACE/CI/DrinkMatch.entitlements"
+
+      - name: Verify the entitlement made it into the signed app
+        run: |
+          APP_PATH=$(find build/DrinkMatch.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
+          echo "App bundle: $APP_PATH"
+          codesign -d --entitlements :- "$APP_PATH" | tee entitlements-dump.xml
+          grep -q "com.apple.developer.applesignin" entitlements-dump.xml \
+            && echo "OK: Sign in with Apple entitlement is present in the signed build." \
+            || (echo "FAIL: entitlement missing from signed build." && exit 1)
+
+      - name: Export IPA for App Store Connect
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          cat > ExportOptions.plist <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>teamID</key>
+              <string>563XHL5ZLR</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath build/DrinkMatch.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8" \
+            -authenticationKeyID "$APPSTORE_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"
+
+      - name: Upload to TestFlight
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          IPA_PATH=$(find build/export -maxdepth 1 -name '*.ipa' | head -1)
+          echo "Uploading $IPA_PATH"
+          xcrun altool --upload-app \
+            -f "$IPA_PATH" \
+            -t ios \
+            --apiKey "$APPSTORE_KEY_ID" \
+            --apiIssuer "$APPSTORE_ISSUER_ID"
+
+      - name: Upload archive as artifact for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrinkMatch-testflight-archive
           path: |
             build/DrinkMatch.xcarchive
             build/export
