@@ -16,18 +16,33 @@ referral-issuer/redeemer deletion paths — see "Behavior changes from the
 prototype" below) all confirmed working against the real
 `drinkmatch-backend` project.
 
-**Sign in with Apple cannot be tested with this project's current Apple
-account.** The "Sign In with Apple" capability — and Push Notifications,
-below — can only be granted to an App ID under a **paid** Apple Developer
-Program membership ($99/yr); this account is still on the free tier, where
-`developer.apple.com`'s Identifiers/Certificates pages aren't even
-reachable. This isn't a Swift Playgrounds-specific limitation like the SDK
-issue below — Xcode would hit the same wall. Until the membership is bought,
-`SignInView` has a temporary dev-only email/password sign-in block (GoTrue's
-plain `/auth/v1/signup` / `/auth/v1/token?grant_type=password`) alongside
-the real Apple button, which is what all the testing above actually used.
-**Delete that block once Apple sign-in is testable** — see its comment in
-`Sources/AppModule/Screens/SignInView.swift`.
+**Sign in with Apple is implemented and confirmed working end-to-end on a
+real iPad** (native `SignInWithAppleButton` → GoTrue's
+`/auth/v1/token?grant_type=id_token` → onboarding). The temporary dev-only
+email/password sign-in block mentioned in older versions of this doc has
+been deleted now that this is verified.
+
+Getting there required working around a real constraint, not just a paid
+membership one: **Swift Playgrounds has no way to add the Sign in with
+Apple capability at all**, even with a paid Apple Developer Program
+membership and the capability already enabled on the App ID in
+`developer.apple.com` — confirmed against Apple's own list of supported
+App Playground capabilities
+(`developer.apple.com/documentation/swift-playgrounds/project-capabilities`),
+which has no Sign in with Apple entry. On-device authorization fails with
+`ASAuthorizationError` `Code=1000` until this is worked around.
+
+The workaround lives entirely outside Swift Playgrounds: `.github/workflows/testflight.yml`
+builds this package headlessly on a GitHub-hosted macOS runner, injecting
+the entitlement by hand via `CODE_SIGN_ENTITLEMENTS=CI/DrinkMatch.entitlements`
+(the capability Package.swift's `.iOSApplication(capabilities:)` also has no
+case for), then hands the signed IPA to [Diawi](https://diawi.com) for a
+tap-to-install-from-Safari link. No Mac needed for this loop — see the
+workflow file's header comment for the full story, including two failed
+attempts at proper Distribution/TestFlight signing (Xcode hard-codes App
+Playground projects to development-only automatic signing; the fix Xcode
+itself names for that requires the Signing & Capabilities GUI, i.e. a Mac).
+Distribution signing is still unsolved without Mac access.
 
 **This does not use the official `supabase-swift` SDK.** It was tried
 first and turned out to be impossible to build in Swift Playgrounds: the
@@ -74,18 +89,20 @@ Store Connect.
    list — required for the native `signInWithIdToken` flow this app uses
    (see [Supabase's Apple login guide](https://supabase.com/docs/guides/auth/social-login/auth-apple),
    "native sign-in" section).
-4. Enable the **Sign in with Apple** capability for this project. Unlike
-   most capabilities, this isn't set in `Package.swift` — Swift Playgrounds
-   doesn't expose a `ProductSetting.IOSAppInfo.Capability` case for it. In
-   Swift Playgrounds on iPad: open this project's settings and enable Sign
-   in with Apple there (requires being signed into an Apple Developer
-   account with an App ID that has the capability enabled — Playgrounds can
-   provision this automatically once you're signed in). In Xcode: Target >
-   Signing & Capabilities > + Capability > Sign in with Apple. **This
-   requires a paid Apple Developer Program membership** — a free account
-   can't reach the Identifiers/Certificates pages needed to grant the
-   capability at all (see "Status"). Until enrolled, use the temporary
-   dev-only email/password sign-in in `SignInView` instead.
+4. Enable the **Sign in with Apple** capability on the App ID itself
+   (`developer.apple.com` > Certificates, Identifiers & Profiles >
+   Identifiers > your App ID > check "Sign In with Apple"). Requires a paid
+   Apple Developer Program membership. **This alone is not enough to test
+   on-device via Swift Playgrounds** — Swift Playgrounds' own capability
+   picker has no entry for Sign in with Apple at all, with no on-device
+   workaround (see "Status"). To actually run a build with the entitlement,
+   either open this package in Xcode on a Mac (Target > Signing &
+   Capabilities > + Capability > Sign in with Apple), or use
+   `.github/workflows/testflight.yml`, which builds it headlessly in CI and
+   ships an installable IPA via Diawi without needing a Mac at all — see
+   that file's header comment for the full setup (Apple Developer Team ID,
+   App Store Connect API key as GitHub secrets, a registered test device,
+   a Diawi API token).
 5. Build and run. First launch: Sign in with Apple → profile setup →
    schedule setup → main board.
 6. For the "新しい人と探す" paywall to show a real price and accept
@@ -230,10 +247,11 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   disabled at the one call site that used to exist in `MainView`. Reason:
   the Push Notifications capability needs Apple's `aps-environment`
   entitlement, which **Swift Playgrounds cannot add** (confirmed via
-  Apple's own developer forums — it requires Xcode, i.e. a Mac) **and which
-  also requires a paid Apple Developer Program membership** regardless of
-  Xcode access (see "Status") — this project's account is still on the free
-  tier. This project has been developed without Mac access. Re-add
+  Apple's own developer forums — it requires Xcode, i.e. a Mac). Now that
+  the Apple Developer Program membership is in place, this is purely the
+  same class of problem Sign in with Apple was (see "Status") — worth
+  trying the same `CODE_SIGN_ENTITLEMENTS` CI workaround, though unverified
+  for this specific entitlement. Re-add
   `.task { await store.enablePushNotifications() }` to `MainView` once
   that capability can actually be granted; nothing else needs to change.
 - Editing your own airline/years-of-service/note — the onboarding form never
