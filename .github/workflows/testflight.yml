@@ -1,4 +1,4 @@
-name: TestFlight build (Sign in with Apple entitlement experiment)
+name: Ad-hoc build (Sign in with Apple entitlement experiment)
 
 # Swift Playgrounds' "Add Capability" list has no entry for Sign in with
 # Apple (confirmed against Apple's own App Playground capabilities docs),
@@ -9,7 +9,17 @@ name: TestFlight build (Sign in with Apple entitlement experiment)
 # xcodebuild honors that override for an SPM-defined iOSApplication product
 # (rather than a traditional .xcodeproj target) is the main thing this
 # workflow is here to find out — the entitlement-check step fails fast,
-# before ever attempting the TestFlight upload, if not.
+# before ever attempting the Diawi upload, if not.
+#
+# First attempt tried a Distribution/app-store-connect archive for
+# TestFlight, but xcodebuild's automatic signing insisted on an "iOS App
+# Development" profile during the archive step regardless (App Playground
+# projects appear to always sign this way — there's no Debug/Release split
+# the way a hand-authored Xcode project has). Rather than fight that,
+# this now leans into it: archive+export as a Development build tied to
+# one registered test device, then hand the IPA to Diawi for an
+# install-from-Safari link — no Mac, TestFlight, or App Store review
+# needed anywhere in the loop.
 #
 # Runs on every push to this branch: workflow_dispatch's "Run workflow"
 # button only shows up in GitHub's UI once a workflow file exists on the
@@ -100,7 +110,7 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>app-store-connect</string>
+              <string>development</string>
               <key>teamID</key>
               <string>563XHL5ZLR</string>
               <key>signingStyle</key>
@@ -117,18 +127,36 @@ jobs:
             -authenticationKeyID "$APPSTORE_KEY_ID" \
             -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"
 
-      - name: Upload to TestFlight
+      - name: Upload to Diawi
         env:
-          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
-          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          DIAWI_TOKEN: ${{ secrets.DIAWI_TOKEN }}
         run: |
           IPA_PATH=$(find build/export -maxdepth 1 -name '*.ipa' | head -1)
-          echo "Uploading $IPA_PATH"
-          xcrun altool --upload-app \
-            -f "$IPA_PATH" \
-            -t ios \
-            --apiKey "$APPSTORE_KEY_ID" \
-            --apiIssuer "$APPSTORE_ISSUER_ID"
+          echo "Uploading $IPA_PATH to Diawi"
+
+          UPLOAD_RESPONSE=$(curl -s -F "token=$DIAWI_TOKEN" -F "file=@$IPA_PATH" -F "find_by_udid=1" -F "wall_of_apps=0" https://upload.diawi.com/)
+          echo "Upload response: $UPLOAD_RESPONSE"
+          JOB=$(echo "$UPLOAD_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['job'])")
+          echo "Diawi job: $JOB"
+
+          for i in $(seq 1 60); do
+            STATUS_JSON=$(curl -s "https://upload.diawi.com/status?token=$DIAWI_TOKEN&job=$JOB")
+            STATUS=$(echo "$STATUS_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status'))")
+            if [ "$STATUS" = "2000" ]; then
+              LINK=$(echo "$STATUS_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['link'])")
+              echo "Diawi install link: $LINK"
+              echo "## Diawi install link" >> "$GITHUB_STEP_SUMMARY"
+              echo "$LINK" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            elif [ "$STATUS" = "4000" ]; then
+              echo "Diawi processing failed: $STATUS_JSON"
+              exit 1
+            fi
+            echo "Still processing (status=$STATUS), waiting..."
+            sleep 5
+          done
+          echo "Timed out waiting for Diawi to finish processing."
+          exit 1
 
       - name: Upload archive as artifact for inspection
         if: always()
@@ -137,6 +165,7 @@ jobs:
           name: DrinkMatch-archive
           path: |
             build/DrinkMatch.xcarchive
+            build/export
             entitlements-dump.xml
             scheme-list.json
           retention-days: 5
