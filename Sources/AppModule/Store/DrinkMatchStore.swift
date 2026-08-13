@@ -333,7 +333,20 @@ final class DrinkMatchStore {
     }
 
     func loadSubscriptionProduct() async {
-        subscriptionProduct = try? await StoreKitManager.fetchSubscriptionProduct()
+        do {
+            subscriptionProduct = try await StoreKitManager.fetchSubscriptionProduct()
+            // Temporary diagnostic: Product.products(for:) doesn't throw when
+            // nothing matches the product ID — it just returns an empty
+            // array — so without this, "still propagating in App Store
+            // Connect" and "misconfigured" both look identical (an infinite
+            // spinner). Remove once the paywall is confirmed loading a real
+            // price on-device.
+            if subscriptionProduct == nil {
+                lastErrorMessage = "商品情報が0件でした（App Store Connect側の反映待ちの可能性があります）: \(subscriptionProductID)"
+            }
+        } catch {
+            lastErrorMessage = "商品情報の取得に失敗しました: \(error)"
+        }
     }
 
     func purchaseSubscription() async {
