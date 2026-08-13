@@ -31,6 +31,10 @@ final class DrinkMatchStore {
 
     var friends: [Person] = []
     var strangerCandidates: [Person] = []
+    /// Shown on PaywallGateView, before subscribing — nil while loading or
+    /// if it failed to load (never surfaced as an error; it's a nice-to-have
+    /// preview, not required to use the app).
+    var strangerCandidateCount: Int?
     /// Per-candidate/friend day-by-day overlap, fetched via `get_match_overlap`
     /// once a candidate list loads — see the note on PersonCardView.overlap.
     var overlapCache: [UUID: [StayOverlap]] = [:]
@@ -461,6 +465,10 @@ final class DrinkMatchStore {
     }
 
     // MARK: - Strangers
+
+    func loadStrangerCandidateCount() async {
+        strangerCandidateCount = try? await SupabaseRepository.countStrangerCandidates()
+    }
 
     func loadStrangerCandidates(baseAirport: String, role: String) async {
         do {

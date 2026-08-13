@@ -245,6 +245,18 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   drinkmatch-backend's `20260801000016_stranger_age_filter.sql`
   (`supabase db push`, or paste it into the Dashboard SQL editor) to be
   applied before `birth_year` exists to read/write.
+- **Candidate-count preview on the paywall.** New-person search has a
+  cold-start problem: with few users, "pay before finding out if anyone's
+  even there" is a hard sell. `PaywallGateView` now shows "現在、予定が
+  重なる新しい人がN人います" (or an encouraging message at zero) before
+  the user subscribes, via `DrinkMatchStore.loadStrangerCandidateCount()`
+  → drinkmatch-backend's `count_stranger_candidates()`, which mirrors
+  `search_stranger_candidates`'s own filters minus the subscription
+  requirement — a real count, not an inflated estimate, since a candidate
+  has never needed to be subscribed themselves to be found. Fails silently
+  (no error shown) if the count can't load, since it's a nice-to-have, not
+  required to use the app. Requires drinkmatch-backend's
+  `20260801000017_stranger_candidate_count.sql` to be applied.
 
 ## Not done yet
 

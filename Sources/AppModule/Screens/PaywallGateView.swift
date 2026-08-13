@@ -20,6 +20,17 @@ struct PaywallGateView: View {
                     .foregroundStyle(Theme.muted)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let count = store.strangerCandidateCount {
+                    Text(count > 0
+                        ? "現在、予定が重なる新しい人が\(count)人います。"
+                        : "現在、条件に合う新しい人はまだ見つかっていません。予定を登録すると見つかりやすくなります。")
+                        .font(.system(size: 12))
+                        .foregroundStyle(count > 0 ? Theme.amber : Theme.faint)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 8)
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, 14)
@@ -55,5 +66,6 @@ struct PaywallGateView: View {
                 .padding(.top, 8)
         }
         .task { await store.loadSubscriptionProduct() }
+        .task { await store.loadStrangerCandidateCount() }
     }
 }

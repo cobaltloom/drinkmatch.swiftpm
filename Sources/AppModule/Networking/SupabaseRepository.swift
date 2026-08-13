@@ -189,6 +189,14 @@ enum SupabaseRepository {
         return try await PostgREST.rpc("search_stranger_candidates", params: params)
     }
 
+    /// Unsubscribed-safe: shown on PaywallGateView so a user can judge
+    /// whether subscribing is worth it before paying blind. See
+    /// drinkmatch-backend's `count_stranger_candidates()` — it's exactly the
+    /// count a subscribed search would return, not an inflated estimate.
+    static func countStrangerCandidates() async throws -> Int {
+        try await PostgREST.rpc("count_stranger_candidates")
+    }
+
     static func passCandidate(userID: UUID, candidateID: UUID) async throws {
         try await PostgREST.insert("passed_candidates", PassedCandidateInsert(userId: userID, candidateUserId: candidateID))
     }
