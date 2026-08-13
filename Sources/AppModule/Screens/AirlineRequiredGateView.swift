@@ -26,7 +26,7 @@ struct AirlineRequiredGateView: View {
 
             AirlineAutocompleteField(code: $airline)
 
-            Button("登録して新しい人と探す") { Task { await submit() } }
+            Button("登録して新しい人を探す") { Task { await submit() } }
                 .buttonStyle(BoardButtonStyle(isDisabled: airline.isEmpty || isSubmitting))
                 .disabled(airline.isEmpty || isSubmitting)
                 .padding(.top, 12)

@@ -105,7 +105,7 @@ Store Connect.
    a Diawi API token).
 5. Build and run. First launch: Sign in with Apple → profile setup →
    schedule setup → main board.
-6. For the "新しい人と探す" paywall to show a real price and accept
+6. For the "新しい人を探す" paywall to show a real price and accept
    purchases: sign the Paid Applications Agreement in App Store Connect,
    then create an auto-renewable subscription product there with an ID
    matching `subscriptionProductID` in

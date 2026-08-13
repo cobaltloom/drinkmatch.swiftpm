@@ -88,7 +88,7 @@ struct MainView: View {
 
             HStack(spacing: 6) {
                 modeButton(.friends, title: "知り合いから探す")
-                modeButton(.strangers, title: "新しい人と探す")
+                modeButton(.strangers, title: "新しい人を探す")
             }
             .padding(.bottom, 14)
 

@@ -54,7 +54,7 @@ struct EmailVerifyGateView: View {
                     Text(errorMessage).font(.system(size: 12)).foregroundStyle(Theme.red).padding(.top, 10)
                 }
 
-                Button("確認して新しい人と探す") { Task { await submitEmail() } }
+                Button("確認して新しい人を探す") { Task { await submitEmail() } }
                     .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
                     .disabled(isSubmitting)
                     .padding(.top, 10)
@@ -78,7 +78,7 @@ struct EmailVerifyGateView: View {
                     Text(errorMessage).font(.system(size: 12)).foregroundStyle(Theme.red).padding(.top, 10)
                 }
 
-                Button("確認して新しい人と探す") { Task { await submitReferral() } }
+                Button("確認して新しい人を探す") { Task { await submitReferral() } }
                     .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
                     .disabled(isSubmitting)
                     .padding(.top, 10)

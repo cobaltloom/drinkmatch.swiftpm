@@ -22,7 +22,7 @@ let maxReferralCodesPerUser = 3
 /// needs to change.
 let autoAcceptOfferFeatureEnabled = false
 
-/// The auto-renewable subscription unlocking "新しい人と探す" (stranger
+/// The auto-renewable subscription unlocking "新しい人を探す" (stranger
 /// matching). Must match a product ID actually created in App Store
 /// Connect — see drinkmatch-backend's README "Billing" for the server side
 /// that verifies purchases of this product.

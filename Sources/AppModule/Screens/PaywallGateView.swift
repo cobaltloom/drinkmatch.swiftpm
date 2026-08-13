@@ -39,7 +39,7 @@ struct PaywallGateView: View {
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.fieldBorder))
                 .padding(.bottom, 14)
 
-                Button(store.isPurchasing ? "処理中…" : "購入して新しい人と探す") {
+                Button(store.isPurchasing ? "処理中…" : "購入して新しい人を探す") {
                     Task { await store.purchaseSubscription() }
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: store.isPurchasing))

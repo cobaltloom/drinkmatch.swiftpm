@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// "新しい人と探す" — gated behind identity verification and a monthly
+/// "新しい人を探す" — gated behind identity verification and a monthly
 /// subscription before the actual search UI is shown.
 struct StrangersTabView: View {
     var store: DrinkMatchStore

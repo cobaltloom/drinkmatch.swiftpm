@@ -121,7 +121,7 @@ struct ProfileSetupView: View {
                 .disabled(!canSubmit)
                 .padding(.top, 12)
 
-                Text("※「知り合いから探す」機能は今すぐ利用できます。「新しい人と探す」機能を使う際に会社メールでの本人確認が必要になります。")
+                Text("※「知り合いから探す」機能は今すぐ利用できます。「新しい人を探す」機能を使う際に会社メールでの本人確認が必要になります。")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
                     .padding(.top, 10)
