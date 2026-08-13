@@ -36,12 +36,40 @@ private enum CompanyFilter: CaseIterable {
     }
 }
 
+/// Age-difference preference for stranger search, compared against the
+/// signed-in user's own `birthYear` (self-reported, year-only — see
+/// UserProfile.birthYear). Like the same-company filter, a candidate that
+/// can't be confirmed either way (their birth year isn't set, or mine
+/// isn't) is excluded from anything but `.any` rather than assumed to pass.
+private enum AgeDiffFilter: CaseIterable {
+    case within5, within7, within10, any
+
+    var label: String {
+        switch self {
+        case .within5: return "年齢差5歳以内"
+        case .within7: return "年齢差7歳以内"
+        case .within10: return "年齢差10歳以内"
+        case .any: return "年齢:気にしない"
+        }
+    }
+
+    var maxDiff: Int? {
+        switch self {
+        case .within5: return 5
+        case .within7: return 7
+        case .within10: return 10
+        case .any: return nil
+        }
+    }
+}
+
 private struct StrangersSearchView: View {
     var store: DrinkMatchStore
 
     @State private var filterBase = "ALL"
     @State private var filterRole = "ALL"
     @State private var companyFilter: CompanyFilter = .any
+    @State private var ageDiffFilter: AgeDiffFilter = .any
     @State private var tabMode: OfferTabMode = .individual
 
     /// Only candidates who actually share a free day/airport with me — a
@@ -49,16 +77,25 @@ private struct StrangersSearchView: View {
     /// here was just noise. Also applies the same-company preference: a
     /// candidate with no airline on file can't be confirmed either way, so
     /// "同じ会社のみ" excludes them (unconfirmed isn't a match) while
-    /// "同じ会社を除く" keeps them (unconfirmed isn't excluded either).
+    /// "同じ会社を除く" keeps them (unconfirmed isn't excluded either). Same
+    /// treatment for the age-difference filter: an unconfirmed birth year
+    /// (mine or theirs) excludes the candidate rather than passing them.
     private var matchingCandidates: [Person] {
         store.strangerCandidates.filter { candidate in
             guard !(store.overlapCache[candidate.id] ?? []).isEmpty else { return false }
+            guard passesAgeFilter(candidate) else { return false }
             switch companyFilter {
             case .any: return true
             case .sameOnly: return !candidate.airline.isEmpty && candidate.airline == store.profile?.airline
             case .excludeSame: return candidate.airline.isEmpty || candidate.airline != store.profile?.airline
             }
         }
+    }
+
+    private func passesAgeFilter(_ candidate: Person) -> Bool {
+        guard let maxDiff = ageDiffFilter.maxDiff else { return true }
+        guard let myBirthYear = store.profile?.birthYear, let candidateBirthYear = candidate.birthYear else { return false }
+        return abs(myBirthYear - candidateBirthYear) <= maxDiff
     }
 
     var body: some View {
@@ -81,7 +118,17 @@ private struct StrangersSearchView: View {
                     roleFilterMenu
                 }
 
-                companyFilterMenu
+                HStack(spacing: 8) {
+                    companyFilterMenu
+                    ageFilterMenu
+                }
+
+                if ageDiffFilter != .any && store.profile?.birthYear == nil {
+                    Text("年齢差フィルターを使うには、プロフィールで生まれ年を設定してください。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.faint)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 if matchingCandidates.isEmpty {
                     Text("現在、予定が重なる新しい人はいません。")
@@ -124,6 +171,26 @@ private struct StrangersSearchView: View {
         } label: {
             HStack(spacing: 4) {
                 Text(companyFilter.label)
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 9))
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(Theme.text)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+        }
+    }
+
+    private var ageFilterMenu: some View {
+        Menu {
+            ForEach(AgeDiffFilter.allCases, id: \.self) { option in
+                Button(option.label) { ageDiffFilter = option }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Text(ageDiffFilter.label)
                 Image(systemName: "chevron.up.chevron.down").font(.system(size: 9))
             }
             .font(.system(size: 12))

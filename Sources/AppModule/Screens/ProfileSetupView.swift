@@ -12,6 +12,12 @@ struct ProfileSetupView: View {
     @State private var displayMode: DisplayMode = .initials
     @State private var nickname = ""
     @State private var ageConfirmed = false
+    @State private var birthYear: Int? = nil
+
+    private static let birthYearOptions: [Int] = {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return Array((currentYear - 70)...(currentYear - 18)).reversed()
+    }()
 
     private var trimmedFullName: String { fullName.trimmingCharacters(in: .whitespaces) }
     private var trimmedNickname: String { nickname.trimmingCharacters(in: .whitespaces) }
@@ -64,6 +70,9 @@ struct ProfileSetupView: View {
                 Text("拠点空港").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
                 AirportAutocompleteField(code: $base)
 
+                Text("生まれ年(任意・年齢が近い人を探すフィルターに使われます)").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
+                birthYearMenu
+
                 Text("お名前").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
                 TextField("例: YOSUKE TANAKA", text: $fullName)
                     .font(.system(size: 14))
@@ -114,7 +123,7 @@ struct ProfileSetupView: View {
                 .padding(.top, 18)
 
                 Button("プロフィールを作成して始める") {
-                    let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname, airline: airline)
+                    let profile = UserProfile(role: role, base: base, fullName: fullName, displayMode: displayMode, nickname: nickname, airline: airline, birthYear: birthYear)
                     onDone(profile, ageConfirmed)
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: !canSubmit))
@@ -128,5 +137,27 @@ struct ProfileSetupView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private var birthYearMenu: some View {
+        Menu {
+            Button("未設定") { birthYear = nil }
+            ForEach(Self.birthYearOptions, id: \.self) { year in
+                Button("\(year)年") { birthYear = year }
+            }
+        } label: {
+            HStack {
+                Text(birthYear.map { "\($0)年" } ?? "未設定")
+                    .font(.system(size: 14))
+                    .foregroundStyle(birthYear == nil ? Theme.faint : Theme.text)
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Theme.muted)
+            }
+            .padding(10)
+            .background(Theme.field)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+        }
+        .menuStyle(.borderlessButton)
     }
 }

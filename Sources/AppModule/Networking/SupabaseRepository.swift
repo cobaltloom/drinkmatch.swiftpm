@@ -38,7 +38,7 @@ enum SupabaseRepository {
     static func fetchProfile(userID: UUID) async throws -> UserRow? {
         let rows: [UserRow] = try await PostgREST.select(
             "users",
-            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed",
+            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year",
             filters: [RestClient.eq("id", userID)],
             limit: 1
         )

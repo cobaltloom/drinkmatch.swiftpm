@@ -18,6 +18,7 @@ struct CreateProfileParams: Encodable {
     var note: String?
     var displayMode: String
     var nickname: String?
+    var birthYear: Int?
 
     enum CodingKeys: String, CodingKey {
         case role = "p_role"
@@ -29,6 +30,7 @@ struct CreateProfileParams: Encodable {
         case note = "p_note"
         case displayMode = "p_display_mode"
         case nickname = "p_nickname"
+        case birthYear = "p_birth_year"
     }
 }
 
@@ -159,6 +161,7 @@ struct UserRow: Decodable {
     var nickname: String?
     var verificationMethod: String?
     var isSubscribed: Bool
+    var birthYear: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, role, airline, note, nickname
@@ -168,12 +171,13 @@ struct UserRow: Decodable {
         case displayMode = "display_mode"
         case verificationMethod = "verification_method"
         case isSubscribed = "is_subscribed"
+        case birthYear = "birth_year"
     }
 
     var isVerified: Bool { verificationMethod != nil }
 
     var asUserProfile: UserProfile {
-        UserProfile(role: role, base: baseAirport, fullName: fullName, displayMode: displayMode, nickname: nickname ?? "", airline: airline ?? "")
+        UserProfile(role: role, base: baseAirport, fullName: fullName, displayMode: displayMode, nickname: nickname ?? "", airline: airline ?? "", birthYear: birthYear)
     }
 
     var asPerson: Person {
@@ -248,6 +252,7 @@ struct StrangerCandidateRow: Decodable, Identifiable {
     var baseAirport: String
     var note: String?
     var displayName: String
+    var birthYear: Int?
     var overlapDays: Int
 
     enum CodingKeys: String, CodingKey {
@@ -255,6 +260,7 @@ struct StrangerCandidateRow: Decodable, Identifiable {
         case role, airline, note
         case baseAirport = "base_airport"
         case displayName = "display_name"
+        case birthYear = "birth_year"
         case overlapDays = "overlap_days"
     }
 
@@ -262,7 +268,7 @@ struct StrangerCandidateRow: Decodable, Identifiable {
 
     var asPerson: Person {
         Person(id: candidateId, name: displayName, fullName: nil, role: role, airline: airline ?? "",
-               base: baseAirport, years: 0, note: note ?? "", stays: [])
+               base: baseAirport, years: 0, note: note ?? "", stays: [], birthYear: birthYear)
     }
 }
 

@@ -153,7 +153,8 @@ final class DrinkMatchStore {
             yearsOfService: nil,
             note: nil,
             displayMode: input.displayMode.rawValue,
-            nickname: input.nickname.isEmpty ? nil : input.nickname
+            nickname: input.nickname.isEmpty ? nil : input.nickname,
+            birthYear: input.birthYear
         )
         do {
             let row = try await SupabaseRepository.createProfile(params)

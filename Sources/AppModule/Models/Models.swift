@@ -51,6 +51,10 @@ struct Person: Identifiable, Hashable {
     var years: Int
     var note: String
     var stays: [StayEntry]
+    /// Self-reported, year-only (see UserProfile.birthYear) — nil if the
+    /// person never set it. Only meaningful for stranger-search candidates,
+    /// where it powers the age-difference filter in StrangersTabView.
+    var birthYear: Int? = nil
 
     func displayName(showFullName: Bool) -> String {
         showFullName ? (fullName ?? name) : name
@@ -170,6 +174,10 @@ struct UserProfile {
     var displayMode: DisplayMode
     var nickname: String
     var airline: String = ""
+    /// Self-reported birth year only, not a full birthdate — enough for an
+    /// approximate age-difference filter in stranger search without storing
+    /// anything more identifying. Optional; nil means the user hasn't set it.
+    var birthYear: Int? = nil
 
     /// Name shown to strangers: nickname if chosen, otherwise generated initials.
     var strangerDisplayName: String {

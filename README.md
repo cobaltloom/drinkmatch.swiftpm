@@ -234,6 +234,17 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
   somehow wasn't. This is Japan's legal drinking age (20), not the general
   age of majority (18 since 2022) — see drinkmatch-backend's README
   "Age/alcohol-guideline confirmation".
+- **Age-difference filter in "新しい人を探す".** `ProfileSetupView` has an
+  optional "生まれ年" (birth year, not full birthdate) field, and
+  `StrangersSearchView` (in `StrangersTabView.swift`) has a 5歳/7歳/10歳
+  以内/気にしない filter menu next to the existing same-company one, same
+  client-side pattern: candidates are compared against the signed-in
+  user's own birth year, and a candidate with no birth year on file (or a
+  caller with none) is excluded rather than assumed to match, once
+  anything but "気にしない" is selected. Requires
+  drinkmatch-backend's `20260801000016_stranger_age_filter.sql`
+  (`supabase db push`, or paste it into the Dashboard SQL editor) to be
+  applied before `birth_year` exists to read/write.
 
 ## Not done yet
 
