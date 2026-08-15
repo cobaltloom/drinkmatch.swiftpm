@@ -20,8 +20,24 @@ struct StayEntryEditorView: View {
 
     private var isAllDay: Bool { entry.from == "00:00" }
 
-    private var timeBinding: Binding<Date> {
-        Binding(get: { date(fromTimeString: entry.from) }, set: { entry.from = timeString(from: $0) })
+    private var hourValue: Int {
+        Int(entry.from.split(separator: ":").first ?? "") ?? 19
+    }
+
+    /// Rounded down to the nearest 5 minutes — free-from times don't need
+    /// finer granularity than that, and it keeps the picker list short.
+    private var minuteValue: Int {
+        let parts = entry.from.split(separator: ":")
+        guard parts.count > 1, let raw = Int(parts[1]) else { return 0 }
+        return (raw / 5) * 5
+    }
+
+    private func setHour(_ hour: Int) {
+        entry.from = String(format: "%02d:%02d", hour, minuteValue)
+    }
+
+    private func setMinute(_ minute: Int) {
+        entry.from = String(format: "%02d:%02d", hourValue, minute)
     }
 
     var body: some View {
@@ -33,9 +49,7 @@ struct StayEntryEditorView: View {
                     .frame(width: 44, alignment: .leading)
 
                 if !isAllDay {
-                    DatePicker("", selection: timeBinding, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .tint(Theme.amber)
+                    timePicker
                 }
 
                 Spacer()
@@ -113,6 +127,38 @@ struct StayEntryEditorView: View {
         }
         .padding(.bottom, 10)
         .overlay(Divider().background(Theme.divider), alignment: .bottom)
+    }
+
+    private var timePicker: some View {
+        HStack(spacing: 2) {
+            Menu {
+                ForEach(0..<24, id: \.self) { hour in
+                    Button(String(format: "%02d", hour)) { setHour(hour) }
+                }
+            } label: {
+                Text(String(format: "%02d", hourValue))
+                    .splitFlap(13)
+                    .foregroundStyle(Theme.amber)
+            }
+
+            Text(":").foregroundStyle(Theme.muted)
+
+            Menu {
+                ForEach(Array(stride(from: 0, to: 60, by: 5)), id: \.self) { minute in
+                    Button(String(format: "%02d", minute)) { setMinute(minute) }
+                }
+            } label: {
+                Text(String(format: "%02d", minuteValue))
+                    .splitFlap(13)
+                    .foregroundStyle(Theme.amber)
+            }
+        }
+        .menuStyle(.borderlessButton)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Theme.field)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
     }
 
     private func toggleAllDay() {
