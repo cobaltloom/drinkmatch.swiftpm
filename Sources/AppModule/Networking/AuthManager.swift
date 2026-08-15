@@ -62,11 +62,9 @@ actor AuthManager {
     /// Sends a password-reset email. Uses the Supabase project's default
     /// "Reset Password" template as-is — Supabase's built-in email
     /// delivery only allows editing templates once a custom SMTP provider
-    /// is configured, which this project doesn't have. No custom URL
-    /// scheme or deep-link handling either: SignInView has the user paste
-    /// the email's "Reset password" link back into the app and pulls the
-    /// same recovery token `resetPassword(email:code:newPassword:)` needs
-    /// straight out of its `token=` query item.
+    /// is configured, which this project doesn't have. SignInView has the
+    /// user paste the email's "Reset password" link back into the app;
+    /// `resetPassword(resetLink:newPassword:)` below does the rest.
     func requestPasswordReset(email: String) async throws {
         try await RestClient.request(
             "auth/v1/recover",
@@ -76,34 +74,102 @@ actor AuthManager {
         )
     }
 
-    /// Verifies the recovery code, sets the new password, and signs the
-    /// user in with the resulting session in one step.
-    func resetPassword(email: String, code: String, newPassword: String) async throws -> UUID {
-        let verifyData = try await RestClient.request(
-            "auth/v1/verify",
-            method: .post,
-            body: try RestClient.encode(VerifyRecoveryBody(type: "recovery", email: email, token: code)),
-            authenticated: false
-        )
-        let verifyResponse: TokenResponse = try RestClient.decode(verifyData)
+    /// Verifies a pasted "Reset password" email link, sets the new
+    /// password, and signs the user in with the resulting session.
+    ///
+    /// The link is a GET endpoint Supabase's own server verifies and then
+    /// 302-redirects from, appending the new session as a URL fragment
+    /// (`#access_token=...&refresh_token=...`) on the project's configured
+    /// redirect URL — not something `POST /auth/v1/verify`'s token/code
+    /// exchange accepts directly (an earlier attempt reusing the link's
+    /// `token=` query item that way failed on-device). Following the
+    /// redirect exactly the way a browser would and reading the fragment
+    /// off it sidesteps needing to reverse-engineer GoTrue's internal
+    /// token format.
+    func resetPassword(resetLink: String, newPassword: String) async throws -> UUID {
+        guard let redirectURL = try await Self.followRedirect(from: resetLink),
+              let fragment = redirectURL.fragment else {
+            throw RestClient.RequestError(status: 0, body: "invalid_reset_link")
+        }
+        let params = Self.parseFragment(fragment)
+        guard let accessToken = params["access_token"], let refreshToken = params["refresh_token"] else {
+            throw RestClient.RequestError(status: 0, body: params["error_description"] ?? "invalid_reset_link")
+        }
+        let expiresAt: Date
+        if let expiresIn = params["expires_in"].flatMap(Double.init) {
+            expiresAt = Date().addingTimeInterval(expiresIn)
+        } else if let expiresAtEpoch = params["expires_at"].flatMap(Double.init) {
+            expiresAt = Date(timeIntervalSince1970: expiresAtEpoch)
+        } else {
+            throw RestClient.RequestError(status: 0, body: "invalid_reset_link")
+        }
 
         // Not routed through the normal `authenticated: true` path (which
         // pulls the persisted session) since there's no signed-in session
         // yet at this point — this recovery session's own access token is
         // passed explicitly instead, the same way `logout(accessToken:)`
-        // does below.
-        try await RestClient.request(
+        // does below. GoTrue's user-update endpoint returns the updated
+        // user object directly, so no separate fetch is needed for it.
+        let updateData = try await RestClient.request(
             "auth/v1/user",
             method: .put,
             body: try RestClient.encode(PasswordUpdateBody(password: newPassword)),
-            extraHeaders: ["Authorization": "Bearer \(verifyResponse.accessToken)"],
+            extraHeaders: ["Authorization": "Bearer \(accessToken)"],
             authenticated: false
         )
+        let user: TokenResponse.UserInfo = try RestClient.decode(updateData)
 
-        let newSession = Self.session(from: verifyResponse)
+        let newSession = AuthSessionData(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresAt: expiresAt,
+            userID: user.id,
+            email: user.email
+        )
         session = newSession
         KeychainStore.save(newSession)
         return newSession.userID
+    }
+
+    /// Visits `urlString` and captures the URL of its first HTTP redirect
+    /// without actually following it (the redirect target is a
+    /// `redirect_to` app URL, typically not a real reachable server, and
+    /// its fragment — not sent in any further request — is the whole
+    /// point). Returns nil if the string isn't a valid URL or the request
+    /// never redirects.
+    private static func followRedirect(from urlString: String) async throws -> URL? {
+        guard let url = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)) else { return nil }
+        let delegate = RedirectCapturingDelegate()
+        let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+        _ = try? await session.data(from: url)
+        return delegate.capturedURL
+    }
+
+    private final class RedirectCapturingDelegate: NSObject, URLSessionTaskDelegate {
+        var capturedURL: URL?
+
+        func urlSession(
+            _ session: URLSession,
+            task: URLSessionTask,
+            willPerformHTTPRedirection response: HTTPURLResponse,
+            newRequest request: URLRequest,
+            completionHandler: @escaping (URLRequest?) -> Void
+        ) {
+            capturedURL = request.url
+            completionHandler(nil)
+        }
+    }
+
+    /// URL fragments (`#key=value&key=value`) aren't sent to servers and
+    /// have no built-in parser in Foundation the way query items do.
+    private static func parseFragment(_ fragment: String) -> [String: String] {
+        var result: [String: String] = [:]
+        for pair in fragment.split(separator: "&") {
+            let parts = pair.split(separator: "=", maxSplits: 1)
+            guard parts.count == 2 else { continue }
+            result[String(parts[0])] = String(parts[1]).removingPercentEncoding ?? String(parts[1])
+        }
+        return result
     }
 
     func signOut() async throws {
@@ -170,12 +236,6 @@ actor AuthManager {
 
     private struct EmailOnlyBody: Encodable {
         var email: String
-    }
-
-    private struct VerifyRecoveryBody: Encodable {
-        var type: String
-        var email: String
-        var token: String
     }
 
     private struct PasswordUpdateBody: Encodable {

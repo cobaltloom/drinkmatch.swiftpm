@@ -28,8 +28,8 @@ enum SupabaseRepository {
         try await AuthManager.shared.requestPasswordReset(email: email)
     }
 
-    static func resetPassword(email: String, code: String, newPassword: String) async throws -> UUID {
-        try await AuthManager.shared.resetPassword(email: email, code: code, newPassword: newPassword)
+    static func resetPassword(resetLink: String, newPassword: String) async throws -> UUID {
+        try await AuthManager.shared.resetPassword(resetLink: resetLink, newPassword: newPassword)
     }
 
     static func signOut() async throws {

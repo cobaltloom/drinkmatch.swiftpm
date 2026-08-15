@@ -105,7 +105,7 @@ final class DrinkMatchStore {
     func requestPasswordReset(email: String) async -> String? {
         do {
             try await SupabaseRepository.requestPasswordReset(email: email)
-            return "確認コードをメールで送信しました。メール内のコードを入力してください。"
+            return "パスワード再設定メールを送信しました。メール内の「Reset password」リンクをコピーして貼り付けてください。"
         } catch {
             return "送信に失敗しました。メールアドレスをご確認ください。"
         }
@@ -113,15 +113,15 @@ final class DrinkMatchStore {
 
     /// Returns a status/error message to show inline, or nil on a
     /// session-issuing success (the user is signed in as a side effect).
-    func resetPassword(email: String, code: String, newPassword: String) async -> String? {
+    func resetPassword(resetLink: String, newPassword: String) async -> String? {
         do {
-            let userID = try await SupabaseRepository.resetPassword(email: email, code: code, newPassword: newPassword)
+            let userID = try await SupabaseRepository.resetPassword(resetLink: resetLink, newPassword: newPassword)
             authUserID = userID
             authEmail = await AuthManager.shared.currentUserEmail
             await loadAfterSignIn(userID: userID)
             return nil
         } catch {
-            return "パスワードの再設定に失敗しました。コードをご確認ください。"
+            return "パスワードの再設定に失敗しました。リンクの有効期限切れ、または貼り付けたリンクをご確認ください。"
         }
     }
 

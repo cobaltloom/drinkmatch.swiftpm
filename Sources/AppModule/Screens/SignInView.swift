@@ -15,8 +15,8 @@ struct SignInView: View {
     @State private var isSubmitting = false
 
     @State private var isResettingPassword = false
-    @State private var resetCodeSent = false
-    @State private var resetCode = ""
+    @State private var resetEmailSent = false
+    @State private var pastedResetLink = ""
     @State private var newPassword = ""
     @State private var resetMessage: String?
     @State private var isResetSubmitting = false
@@ -86,8 +86,8 @@ struct SignInView: View {
 
     private var passwordResetSection: some View {
         VStack(spacing: 8) {
-            if !resetCodeSent {
-                Button("パスワード再設定メールを送信") { Task { await sendResetCode() } }
+            if !resetEmailSent {
+                Button("パスワード再設定メールを送信") { Task { await sendResetEmail() } }
                     .buttonStyle(BoardButtonStyle(isDisabled: isResetSubmitting))
                     .disabled(isResetSubmitting || email.isEmpty)
             } else {
@@ -97,7 +97,7 @@ struct SignInView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                TextField("コピーしたリンクを貼り付け", text: $resetCode)
+                TextField("コピーしたリンクを貼り付け", text: $pastedResetLink)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .font(.system(size: 14))
@@ -132,31 +132,16 @@ struct SignInView: View {
         message = await action(email, password)
     }
 
-    private func sendResetCode() async {
+    private func sendResetEmail() async {
         isResetSubmitting = true
         defer { isResetSubmitting = false }
         resetMessage = await store.requestPasswordReset(email: email)
-        resetCodeSent = true
+        resetEmailSent = true
     }
 
     private func submitResetPassword() async {
         isResetSubmitting = true
         defer { isResetSubmitting = false }
-        let token = Self.token(fromPastedLinkOrCode: resetCode)
-        resetMessage = await store.resetPassword(email: email, code: token, newPassword: newPassword)
-    }
-
-    /// The reset email's link embeds the same recovery token
-    /// `/auth/v1/verify` accepts directly (`...?token=XXXX&type=recovery...`)
-    /// — pulls it out of a pasted link, or passes the input through as-is
-    /// if it doesn't look like a URL (e.g. a plain code, once/if the
-    /// Supabase project's email template is customized to show one).
-    private static func token(fromPastedLinkOrCode input: String) -> String {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let components = URLComponents(string: trimmed),
-              let token = components.queryItems?.first(where: { $0.name == "token" })?.value else {
-            return trimmed
-        }
-        return token
+        resetMessage = await store.resetPassword(resetLink: pastedResetLink, newPassword: newPassword)
     }
 }
