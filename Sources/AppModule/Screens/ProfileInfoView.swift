@@ -2,8 +2,7 @@ import SwiftUI
 
 /// Read-only account/profile summary, reachable from MainView's overflow
 /// menu — mainly so users can check which email address they're signed in
-/// with (Sign in with Apple's account picker doesn't make that obvious
-/// afterward).
+/// with.
 struct ProfileInfoView: View {
     var store: DrinkMatchStore
 

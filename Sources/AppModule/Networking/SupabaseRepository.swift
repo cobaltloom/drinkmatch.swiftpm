@@ -16,8 +16,12 @@ import Foundation
 enum SupabaseRepository {
     // MARK: - Auth
 
-    static func signInWithApple(idToken: String) async throws -> UUID {
-        try await AuthManager.shared.signInWithApple(idToken: idToken)
+    static func signUpWithEmail(email: String, password: String) async throws -> UUID? {
+        try await AuthManager.shared.signUpWithEmail(email: email, password: password)
+    }
+
+    static func signInWithEmail(email: String, password: String) async throws -> UUID {
+        try await AuthManager.shared.signInWithEmail(email: email, password: password)
     }
 
     static func signOut() async throws {

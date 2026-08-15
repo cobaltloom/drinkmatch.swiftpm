@@ -1,12 +1,18 @@
 import SwiftUI
-import AuthenticationServices
 
-/// The very first screen for a signed-out user. Apple requires Sign in with
-/// Apple as an option whenever another third-party login is offered (App
-/// Store Review Guideline 4.8); this app offers only Apple for now, which
-/// keeps things simple and compliant from day one.
+/// The very first screen for a signed-out user. Email/password (Supabase
+/// Auth) rather than Sign in with Apple: this app doesn't offer any other
+/// third-party login, so Apple's Guideline 4.8 requirement (offer Sign in
+/// with Apple whenever another third-party login is present) doesn't apply,
+/// and email/password needs no App Store entitlement or paid Developer
+/// Program capability to work.
 struct SignInView: View {
     var store: DrinkMatchStore
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var message: String?
+    @State private var isSubmitting = false
 
     var body: some View {
         BoardScreenContainer {
@@ -19,39 +25,50 @@ struct SignInView: View {
                 }
                 .padding(.top, 80)
 
-                SignInWithAppleButton(.signIn) { request in
-                    request.requestedScopes = [.fullName, .email]
-                } onCompletion: { result in
-                    handleAppleSignInResult(result)
-                }
-                .signInWithAppleButtonStyle(.white)
-                .frame(height: 50)
-                .frame(maxWidth: 320)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(spacing: 8) {
+                    TextField("メールアドレス", text: $email)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .font(.system(size: 14))
+                        .padding(10)
+                        .background(Theme.field)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
 
-                if let message = store.lastErrorMessage {
-                    Text(message).font(.system(size: 12)).foregroundStyle(Theme.red)
+                    SecureField("パスワード（8文字以上）", text: $password)
+                        .font(.system(size: 14))
+                        .padding(10)
+                        .background(Theme.field)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+
+                    HStack(spacing: 12) {
+                        Button("新規登録") { Task { await submit(store.signUpWithEmail) } }
+                            .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
+                        Button("サインイン") { Task { await submit(store.signInWithEmail) } }
+                            .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
+                    }
+                    .disabled(isSubmitting)
+
+                    if let message {
+                        Text(message).font(.system(size: 12)).foregroundStyle(Theme.muted)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    if let storeMessage = store.lastErrorMessage {
+                        Text(storeMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
+                    }
                 }
+                .frame(maxWidth: 320)
             }
             .frame(maxWidth: .infinity)
         }
     }
 
-    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let tokenData = credential.identityToken,
-                  let idToken = String(data: tokenData, encoding: .utf8) else {
-                store.lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
-                return
-            }
-            Task { await store.signInWithApple(idToken: idToken) }
-        case .failure(let error):
-            if let authError = error as? ASAuthorizationError, authError.code == .canceled {
-                return
-            }
-            store.lastErrorMessage = "サインインに失敗しました。もう一度お試しください。"
-        }
+    private func submit(_ action: (String, String) async -> String?) async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+        message = await action(email, password)
     }
 }

@@ -23,8 +23,36 @@ actor AuthManager {
     var currentUserID: UUID? { session?.userID }
     var currentUserEmail: String? { session?.email }
 
-    func signInWithApple(idToken: String) async throws -> UUID {
-        let response = try await Self.exchange(grantType: "id_token", body: IDTokenBody(provider: "apple", idToken: idToken))
+    /// Returns nil when GoTrue requires email confirmation before a session
+    /// exists (the caller should prompt the user to check their inbox).
+    func signUpWithEmail(email: String, password: String) async throws -> UUID? {
+        let data = try await RestClient.request(
+            "auth/v1/signup",
+            method: .post,
+            body: try RestClient.encode(EmailPasswordBody(email: email, password: password)),
+            authenticated: false
+        )
+        let response: SignUpResponse = try RestClient.decode(data)
+        guard let accessToken = response.accessToken,
+              let refreshToken = response.refreshToken,
+              let expiresAt = response.expiresAt,
+              let user = response.user else {
+            return nil
+        }
+        let newSession = AuthSessionData(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresAt: Date(timeIntervalSince1970: TimeInterval(expiresAt)),
+            userID: user.id,
+            email: user.email
+        )
+        session = newSession
+        KeychainStore.save(newSession)
+        return newSession.userID
+    }
+
+    func signInWithEmail(email: String, password: String) async throws -> UUID {
+        let response = try await Self.exchange(grantType: "password", body: EmailPasswordBody(email: email, password: password))
         let newSession = Self.session(from: response)
         session = newSession
         KeychainStore.save(newSession)
@@ -88,15 +116,31 @@ actor AuthManager {
 
     // MARK: - Wire format (GoTrue's actual REST contract, not the SDK's)
 
-    private struct IDTokenBody: Encodable {
-        var provider: String
-        var idToken: String
-        enum CodingKeys: String, CodingKey { case provider, idToken = "id_token" }
+    private struct EmailPasswordBody: Encodable {
+        var email: String
+        var password: String
     }
 
     private struct RefreshTokenBody: Encodable {
         var refreshToken: String
         enum CodingKeys: String, CodingKey { case refreshToken = "refresh_token" }
+    }
+
+    /// `/auth/v1/signup`'s response shape when email confirmation is
+    /// required: a user object with no session fields at all, rather than
+    /// TokenResponse's guaranteed access/refresh tokens.
+    private struct SignUpResponse: Decodable {
+        var accessToken: String?
+        var refreshToken: String?
+        var expiresAt: Int?
+        var user: TokenResponse.UserInfo?
+
+        enum CodingKeys: String, CodingKey {
+            case accessToken = "access_token"
+            case refreshToken = "refresh_token"
+            case expiresAt = "expires_at"
+            case user
+        }
     }
 
     private struct TokenResponse: Decodable {
