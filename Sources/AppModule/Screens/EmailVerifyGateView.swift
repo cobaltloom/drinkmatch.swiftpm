@@ -33,7 +33,7 @@ struct EmailVerifyGateView: View {
 
             Picker("認証方法", selection: $mode) {
                 Text("会社メールで認証").tag(Mode.email)
-                Text("先輩の紹介で認証").tag(Mode.referral)
+                Text("本人確認コードで認証").tag(Mode.referral)
             }
             .pickerStyle(.segmented)
             .onChange(of: mode) { errorMessage = "" }
@@ -59,7 +59,7 @@ struct EmailVerifyGateView: View {
                     .disabled(isSubmitting)
                     .padding(.top, 10)
             } else {
-                Text("すでに本人確認済みの航空従事者から発行された紹介コードをお持ちの場合、入力してください。")
+                Text("すでに本人確認済みの航空従事者から発行された本人確認コードをお持ちの場合、入力してください。")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
                     .fixedSize(horizontal: false, vertical: true)

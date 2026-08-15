@@ -14,7 +14,7 @@ struct ReferralCodeGeneratorView: View {
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("会社メールを持たない後輩・知人が新しい人を探す機能を使えるように、紹介コードを発行できます(1人あたり\(maxReferralCodesPerUser)件まで)。")
+                Text("会社メールを持たない後輩・知人が新しい人を探す機能を使えるように、本人確認コードを発行できます(1人あたり\(maxReferralCodesPerUser)件まで)。")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.muted)
                     .fixedSize(horizontal: false, vertical: true)
@@ -39,7 +39,7 @@ struct ReferralCodeGeneratorView: View {
                     }
                 }
 
-                Button(atCap ? "発行上限に達しました" : "新しい紹介コードを発行") {
+                Button(atCap ? "発行上限に達しました" : "新しい本人確認コードを発行") {
                     onGenerate()
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: atCap))
@@ -50,7 +50,7 @@ struct ReferralCodeGeneratorView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.cardBorder))
         } label: {
-            Text("後輩に紹介コードを発行する (\(codes.count)/\(maxReferralCodesPerUser))")
+            Text("後輩に本人確認コードを発行する (\(codes.count)/\(maxReferralCodesPerUser))")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.muted)
         }

@@ -317,14 +317,14 @@ final class DrinkMatchStore {
     }
 
     func redeemReferralCodeForVerification(_ code: String) async -> String? {
-        guard !code.isEmpty else { return "紹介コードを入力してください" }
+        guard !code.isEmpty else { return "本人確認コードを入力してください" }
         do {
             try await SupabaseRepository.redeemReferralCode(code: code)
             isVerified = true
             return nil
         } catch {
             switch BackendErrorCode.from(error) {
-            case .referralCodeNotFound: return "紹介コードが見つかりません"
+            case .referralCodeNotFound: return "本人確認コードが見つかりません"
             case .referralCodeAlreadyUsed: return "このコードはすでに使用されています"
             case .referralCodeSelfUse: return "自分が発行したコードは使用できません"
             default: return "確認に失敗しました"
@@ -388,7 +388,7 @@ final class DrinkMatchStore {
         do {
             myReferralCodes = try await SupabaseRepository.fetchMyReferralCodes(userID: userID)
         } catch {
-            lastErrorMessage = "紹介コードの読み込みに失敗しました。"
+            lastErrorMessage = "本人確認コードの読み込みに失敗しました。"
         }
     }
 
@@ -398,8 +398,8 @@ final class DrinkMatchStore {
             await loadMyReferralCodes()
         } catch {
             lastErrorMessage = BackendErrorCode.from(error) == .referralCodeCapReached
-                ? "紹介コードの発行上限に達しています。"
-                : "紹介コードの発行に失敗しました。"
+                ? "本人確認コードの発行上限に達しています。"
+                : "本人確認コードの発行に失敗しました。"
         }
     }
 
