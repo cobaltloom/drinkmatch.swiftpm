@@ -78,6 +78,31 @@ jobs:
           echo "Resolved scheme: $SCHEME"
           echo "name=$SCHEME" >> "$GITHUB_OUTPUT"
 
+      # Without this, every run starts with an empty keychain, so
+      # -allowProvisioningUpdates has no local private key to reuse and
+      # mints a brand-new signing certificate every time — which is what
+      # was silently exhausting the account's certificate quota (see
+      # bootstrap-signing-cert.yml). Importing the one certificate minted
+      # there means this step only ever has to fetch/refresh a
+      # provisioning profile, never a new certificate.
+      - name: Import signing certificate
+        env:
+          P12_BASE64: ${{ secrets.IOS_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_SIGNING_P12_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+          CERT_PATH="$RUNNER_TEMP/signing.p12"
+
+          echo -n "$P12_BASE64" | base64 --decode -o "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
       - name: Archive with Sign in with Apple entitlement
         env:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
