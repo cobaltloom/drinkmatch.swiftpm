@@ -59,6 +59,52 @@ actor AuthManager {
         return newSession.userID
     }
 
+    /// Sends a password-reset email containing a 6-digit recovery code
+    /// (not a magic link) — matches the app's existing manual-code-entry
+    /// pattern (see EmailVerifyGateView's referral code) and needs no
+    /// custom URL scheme or deep-link handling. Requires the Supabase
+    /// project's "Reset Password" email template to include `{{ .Token }}`
+    /// (Dashboard > Authentication > Email Templates) — the default
+    /// template only has the magic link, not the code.
+    func requestPasswordReset(email: String) async throws {
+        try await RestClient.request(
+            "auth/v1/recover",
+            method: .post,
+            body: try RestClient.encode(EmailOnlyBody(email: email)),
+            authenticated: false
+        )
+    }
+
+    /// Verifies the recovery code, sets the new password, and signs the
+    /// user in with the resulting session in one step.
+    func resetPassword(email: String, code: String, newPassword: String) async throws -> UUID {
+        let verifyData = try await RestClient.request(
+            "auth/v1/verify",
+            method: .post,
+            body: try RestClient.encode(VerifyRecoveryBody(type: "recovery", email: email, token: code)),
+            authenticated: false
+        )
+        let verifyResponse: TokenResponse = try RestClient.decode(verifyData)
+
+        // Not routed through the normal `authenticated: true` path (which
+        // pulls the persisted session) since there's no signed-in session
+        // yet at this point — this recovery session's own access token is
+        // passed explicitly instead, the same way `logout(accessToken:)`
+        // does below.
+        try await RestClient.request(
+            "auth/v1/user",
+            method: .put,
+            body: try RestClient.encode(PasswordUpdateBody(password: newPassword)),
+            extraHeaders: ["Authorization": "Bearer \(verifyResponse.accessToken)"],
+            authenticated: false
+        )
+
+        let newSession = Self.session(from: verifyResponse)
+        session = newSession
+        KeychainStore.save(newSession)
+        return newSession.userID
+    }
+
     func signOut() async throws {
         if let token = session?.accessToken {
             try? await Self.logout(accessToken: token)
@@ -118,6 +164,20 @@ actor AuthManager {
 
     private struct EmailPasswordBody: Encodable {
         var email: String
+        var password: String
+    }
+
+    private struct EmailOnlyBody: Encodable {
+        var email: String
+    }
+
+    private struct VerifyRecoveryBody: Encodable {
+        var type: String
+        var email: String
+        var token: String
+    }
+
+    private struct PasswordUpdateBody: Encodable {
         var password: String
     }
 
