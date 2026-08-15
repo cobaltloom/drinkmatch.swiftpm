@@ -212,9 +212,7 @@ struct MatchesView: View {
                                 )
                             }
                         }
-                        DatePicker("", selection: $composeTime, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                            .tint(Theme.amber)
+                        HourMinuteMenuPicker(time: $composeTime)
                         TextField("お店(例: 国際通り 居酒屋)", text: $composePlace)
                             .font(.system(size: 13))
                             .padding(8)
