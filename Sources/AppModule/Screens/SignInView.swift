@@ -87,12 +87,18 @@ struct SignInView: View {
     private var passwordResetSection: some View {
         VStack(spacing: 8) {
             if !resetCodeSent {
-                Button("確認コードをメールで送信") { Task { await sendResetCode() } }
+                Button("パスワード再設定メールを送信") { Task { await sendResetCode() } }
                     .buttonStyle(BoardButtonStyle(isDisabled: isResetSubmitting))
                     .disabled(isResetSubmitting || email.isEmpty)
             } else {
-                TextField("確認コード", text: $resetCode)
-                    .textInputAutocapitalization(.characters)
+                Text("メール内の「Reset password」リンクを長押しして「リンクをコピー」を選び、ここに貼り付けてください。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.muted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                TextField("コピーしたリンクを貼り付け", text: $resetCode)
+                    .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .font(.system(size: 14))
                     .padding(10)
@@ -136,6 +142,21 @@ struct SignInView: View {
     private func submitResetPassword() async {
         isResetSubmitting = true
         defer { isResetSubmitting = false }
-        resetMessage = await store.resetPassword(email: email, code: resetCode, newPassword: newPassword)
+        let token = Self.token(fromPastedLinkOrCode: resetCode)
+        resetMessage = await store.resetPassword(email: email, code: token, newPassword: newPassword)
+    }
+
+    /// The reset email's link embeds the same recovery token
+    /// `/auth/v1/verify` accepts directly (`...?token=XXXX&type=recovery...`)
+    /// — pulls it out of a pasted link, or passes the input through as-is
+    /// if it doesn't look like a URL (e.g. a plain code, once/if the
+    /// Supabase project's email template is customized to show one).
+    private static func token(fromPastedLinkOrCode input: String) -> String {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let components = URLComponents(string: trimmed),
+              let token = components.queryItems?.first(where: { $0.name == "token" })?.value else {
+            return trimmed
+        }
+        return token
     }
 }

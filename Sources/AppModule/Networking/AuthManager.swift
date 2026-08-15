@@ -59,13 +59,14 @@ actor AuthManager {
         return newSession.userID
     }
 
-    /// Sends a password-reset email containing a 6-digit recovery code
-    /// (not a magic link) — matches the app's existing manual-code-entry
-    /// pattern (see EmailVerifyGateView's referral code) and needs no
-    /// custom URL scheme or deep-link handling. Requires the Supabase
-    /// project's "Reset Password" email template to include `{{ .Token }}`
-    /// (Dashboard > Authentication > Email Templates) — the default
-    /// template only has the magic link, not the code.
+    /// Sends a password-reset email. Uses the Supabase project's default
+    /// "Reset Password" template as-is — Supabase's built-in email
+    /// delivery only allows editing templates once a custom SMTP provider
+    /// is configured, which this project doesn't have. No custom URL
+    /// scheme or deep-link handling either: SignInView has the user paste
+    /// the email's "Reset password" link back into the app and pulls the
+    /// same recovery token `resetPassword(email:code:newPassword:)` needs
+    /// straight out of its `token=` query item.
     func requestPasswordReset(email: String) async throws {
         try await RestClient.request(
             "auth/v1/recover",
