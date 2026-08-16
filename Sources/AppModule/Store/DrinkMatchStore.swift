@@ -102,31 +102,6 @@ final class DrinkMatchStore {
         }
     }
 
-    func requestPasswordReset(email: String) async -> String? {
-        do {
-            try await SupabaseRepository.requestPasswordReset(email: email)
-            return "パスワード再設定メールを送信しました。メール内の「Reset password」リンクをコピーして貼り付けてください。"
-        } catch {
-            return "送信に失敗しました。メールアドレスをご確認ください。"
-        }
-    }
-
-    /// Returns a status/error message to show inline, or nil on a
-    /// session-issuing success (the user is signed in as a side effect).
-    func resetPassword(resetLink: String, newPassword: String) async -> String? {
-        do {
-            let userID = try await SupabaseRepository.resetPassword(resetLink: resetLink, newPassword: newPassword)
-            authUserID = userID
-            authEmail = await AuthManager.shared.currentUserEmail
-            await loadAfterSignIn(userID: userID)
-            return nil
-        } catch {
-            // Temporary diagnostic: raw error, not the generic message —
-            // revert once this flow is confirmed working on-device.
-            return "パスワードの再設定に失敗しました: \(error)"
-        }
-    }
-
     func signOut() async {
         try? await SupabaseRepository.signOut()
         authUserID = nil
