@@ -23,9 +23,12 @@ struct MainView: View {
     }
 
     private var scheduleSummary: String {
-        store.mySchedule.isEmpty
+        let upcoming = store.mySchedule.filter {
+            !BoardCalendar.isPastDay(year: BoardCalendar.year, month: BoardCalendar.month, day: $0.day)
+        }
+        return upcoming.isEmpty
             ? "未設定"
-            : store.mySchedule.map { "\(dateLabel($0.day))\(airportLabel($0.location))" }.joined(separator: ", ")
+            : upcoming.map { "\(dateLabel($0.day))\(airportLabel($0.location))" }.joined(separator: ", ")
     }
 
     var body: some View {
