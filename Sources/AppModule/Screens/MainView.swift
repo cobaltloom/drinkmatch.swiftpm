@@ -56,22 +56,10 @@ struct MainView: View {
             .padding(.bottom, 4)
 
             HStack(spacing: 6) {
-                Text("職種:").font(.system(size: 11)).foregroundStyle(Theme.faint)
-                Menu {
-                    ForEach(Roles.all) { role in
-                        Button(role.label) { Task { await store.updateRole(role.code) } }
-                    }
-                } label: {
-                    Text(Roles.label(for: store.profile?.role ?? ""))
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.amber)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Theme.card)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-                }
-                Text("/ \(store.profile?.base ?? "") — 登録済みステイ: \(scheduleSummary)")
+                // Editing role/airline/base now lives in ProfileInfoView
+                // (rate-limited server-side — see updateIdentity) rather
+                // than an instant switch here.
+                Text("職種: \(Roles.label(for: store.profile?.role ?? "")) / \(store.profile?.base ?? "") — 登録済みステイ: \(scheduleSummary)")
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.faint)
                 Spacer(minLength: 0)

@@ -186,31 +186,39 @@ final class DrinkMatchStore {
         }
     }
 
-    func updateRole(_ role: String) async {
-        guard let userID = authUserID else { return }
-        let previous = profile?.role
+    /// Rate-limited server-side to once every 30 days, shared across all
+    /// three fields (see update_identity() in drinkmatch-backend) — these
+    /// drive candidate matching, so unrestricted changes would be an easy
+    /// way to probe for more match candidates. Returns a status message to
+    /// show inline, or nil on success.
+    func updateIdentity(role: String, airline: String, base: String) async -> String? {
+        let previous = profile
         profile?.role = role
+        profile?.airline = airline
+        profile?.base = base
         do {
-            try await SupabaseRepository.updateRole(userID: userID, role: role)
+            let row = try await SupabaseRepository.updateIdentity(
+                role: role, airline: airline.isEmpty ? nil : airline, baseAirport: base
+            )
+            profile = row.asUserProfile
+            return nil
         } catch {
-            profile?.role = previous ?? role
-            lastErrorMessage = "職種の更新に失敗しました。"
+            profile = previous
+            return BackendErrorCode.from(error) == .identityUpdateCooldown
+                ? "変更できるのは30日に1回までです。"
+                : "プロフィールの更新に失敗しました。"
         }
     }
 
     /// Required before "新しい人を探す" unlocks (see StrangersTabView's
     /// AirlineRequiredGateView) even though onboarding leaves it optional —
     /// asking for it upfront was too high a bar for people just trying the
-    /// friends-matching feature.
+    /// friends-matching feature. Exempt from updateIdentity's cooldown
+    /// server-side since the account has no airline on file yet.
     func updateAirline(_ airline: String) async {
-        guard let userID = authUserID else { return }
-        let previous = profile?.airline
-        profile?.airline = airline
-        do {
-            try await SupabaseRepository.updateAirline(userID: userID, airline: airline)
-        } catch {
-            profile?.airline = previous ?? ""
-            lastErrorMessage = "会社の更新に失敗しました。"
+        guard let profile else { return }
+        if let message = await updateIdentity(role: profile.role, airline: airline, base: profile.base) {
+            lastErrorMessage = message
         }
     }
 

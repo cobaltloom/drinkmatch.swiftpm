@@ -178,6 +178,11 @@ struct UserProfile {
     /// approximate age-difference filter in stranger search without storing
     /// anything more identifying. Optional; nil means the user hasn't set it.
     var birthYear: Int? = nil
+    /// When role/airline/base were last changed — `update_identity()` on
+    /// the backend rejects another change within 30 days of this. Defaults
+    /// to distant past so a freshly-onboarded profile (which hasn't round-
+    /// tripped through the server yet) never looks like it's on cooldown.
+    var identityUpdatedAt: Date = .distantPast
 
     /// Name shown to strangers: nickname if chosen, otherwise generated initials.
     var strangerDisplayName: String {
@@ -188,6 +193,16 @@ struct UserProfile {
             return initials(from: fullName)
         }
     }
+
+    /// Mirrors update_identity()'s server-side 30-day cooldown so the UI can
+    /// disable editing and show the next-eligible date proactively, instead
+    /// of only finding out after a failed attempt. The server is still the
+    /// real enforcement point — this is a display convenience only.
+    var nextIdentityEditDate: Date {
+        identityUpdatedAt.addingTimeInterval(30 * 24 * 60 * 60)
+    }
+
+    var canEditIdentity: Bool { Date() >= nextIdentityEditDate }
 }
 
 /// Top-level screen the root view is currently showing.

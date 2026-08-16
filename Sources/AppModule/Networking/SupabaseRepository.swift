@@ -42,7 +42,7 @@ enum SupabaseRepository {
     static func fetchProfile(userID: UUID) async throws -> UserRow? {
         let rows: [UserRow] = try await PostgREST.select(
             "users",
-            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year",
+            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year,identity_updated_at",
             filters: [RestClient.eq("id", userID)],
             limit: 1
         )
@@ -53,14 +53,14 @@ enum SupabaseRepository {
         try await PostgREST.rpc("create_profile", params: params)
     }
 
-    static func updateRole(userID: UUID, role: String) async throws {
-        struct Patch: Encodable { var role: String }
-        try await PostgREST.update("users", Patch(role: role), filters: [RestClient.eq("id", userID)])
-    }
-
-    static func updateAirline(userID: UUID, airline: String) async throws {
-        struct Patch: Encodable { var airline: String }
-        try await PostgREST.update("users", Patch(airline: airline), filters: [RestClient.eq("id", userID)])
+    /// Rate-limited server-side (30 days, see update_identity() in
+    /// drinkmatch-backend) — replaces the old direct-PATCH updateRole,
+    /// which had no such limit.
+    static func updateIdentity(role: String, airline: String?, baseAirport: String) async throws -> UserRow {
+        try await PostgREST.rpc(
+            "update_identity",
+            params: UpdateIdentityParams(role: role, airline: airline, baseAirport: baseAirport)
+        )
     }
 
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {

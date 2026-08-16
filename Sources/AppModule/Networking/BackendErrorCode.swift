@@ -28,6 +28,7 @@ enum BackendErrorCode: String {
     case userBlocked = "user_blocked"
     case userNotFound = "user_not_found"
     case ageConfirmationRequired = "age_confirmation_required"
+    case identityUpdateCooldown = "identity_update_cooldown"
 
     /// Best-effort match against a thrown error's description — RestClient's
     /// RequestError.description embeds PostgREST's JSON error body, which
@@ -43,6 +44,6 @@ enum BackendErrorCode: String {
         .inviteCodeNotFound, .inviteCodeAlreadyUsed, .inviteCodeSelfUse,
         .offerNotFound, .offerNotPending, .offerNotAccepted, .notAuthorized, .cannotOfferSelf,
         .cannotBlockSelf, .cannotReportSelf, .userBlocked, .userNotFound,
-        .ageConfirmationRequired,
+        .ageConfirmationRequired, .identityUpdateCooldown,
     ]
 }

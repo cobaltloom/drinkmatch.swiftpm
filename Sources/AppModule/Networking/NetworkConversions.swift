@@ -37,3 +37,18 @@ func postgresTimeString(fromClientTime hhmm: String) -> String {
 func clientTimeString(fromPostgresTime hhmmss: String) -> String {
     String(hhmmss.prefix(5))
 }
+
+/// Postgres `timestamptz` round-trips as e.g. "2026-08-16T12:34:56.789012+00:00"
+/// — sub-second precision this app never needs, and `ISO8601DateFormatter`
+/// disagrees across platforms on how many fractional digits to accept, so
+/// it's stripped before parsing rather than relying on `.withFractionalSeconds`.
+func date(fromPostgresTimestamp iso: String) -> Date? {
+    var stripped = iso
+    if let dotIndex = iso.firstIndex(of: "."),
+       let offsetStart = iso[iso.index(after: dotIndex)...].firstIndex(where: { $0 == "+" || $0 == "-" || $0 == "Z" }) {
+        stripped = String(iso[..<dotIndex]) + iso[offsetStart...]
+    }
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter.date(from: stripped)
+}

@@ -34,6 +34,18 @@ struct CreateProfileParams: Encodable {
     }
 }
 
+struct UpdateIdentityParams: Encodable {
+    var role: String
+    var airline: String?
+    var baseAirport: String
+
+    enum CodingKeys: String, CodingKey {
+        case role = "p_role"
+        case airline = "p_airline"
+        case baseAirport = "p_base_airport"
+    }
+}
+
 struct EmailParams: Encodable {
     var email: String
     enum CodingKeys: String, CodingKey { case email = "p_email" }
@@ -162,6 +174,10 @@ struct UserRow: Decodable {
     var verificationMethod: String?
     var isSubscribed: Bool
     var birthYear: Int?
+    /// Postgres `timestamptz`, kept as a raw string like every other
+    /// timestamp in this file (see NetworkConversions.swift's header
+    /// comment) — converted to `Date` only at the `asUserProfile` boundary.
+    var identityUpdatedAt: String
 
     enum CodingKeys: String, CodingKey {
         case id, role, airline, note, nickname
@@ -172,12 +188,20 @@ struct UserRow: Decodable {
         case verificationMethod = "verification_method"
         case isSubscribed = "is_subscribed"
         case birthYear = "birth_year"
+        case identityUpdatedAt = "identity_updated_at"
     }
 
     var isVerified: Bool { verificationMethod != nil }
 
     var asUserProfile: UserProfile {
-        UserProfile(role: role, base: baseAirport, fullName: fullName, displayMode: displayMode, nickname: nickname ?? "", airline: airline ?? "", birthYear: birthYear)
+        UserProfile(
+            role: role, base: baseAirport, fullName: fullName, displayMode: displayMode,
+            nickname: nickname ?? "", airline: airline ?? "", birthYear: birthYear,
+            // .distantPast on a parse failure means "no cooldown" rather than
+            // wrongly locking editing forever — the server enforces the real
+            // cooldown regardless of what the client shows.
+            identityUpdatedAt: date(fromPostgresTimestamp: identityUpdatedAt) ?? .distantPast
+        )
     }
 
     var asPerson: Person {
