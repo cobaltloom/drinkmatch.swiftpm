@@ -87,13 +87,18 @@ actor AuthManager {
     /// off it sidesteps needing to reverse-engineer GoTrue's internal
     /// token format.
     func resetPassword(resetLink: String, newPassword: String) async throws -> UUID {
-        guard let redirectURL = try await Self.followRedirect(from: resetLink),
-              let fragment = redirectURL.fragment else {
-            throw RestClient.RequestError(status: 0, body: "invalid_reset_link")
+        // Temporary diagnostic detail in each thrown error's body (DrinkMatchStore
+        // currently surfaces it raw) — remove once this flow is confirmed
+        // working on-device, same as the earlier Sign in with Apple diagnostic.
+        guard let redirectURL = try await Self.followRedirect(from: resetLink) else {
+            throw RestClient.RequestError(status: 0, body: "no redirect captured — the pasted text may not be a valid URL")
+        }
+        guard let fragment = redirectURL.fragment, !fragment.isEmpty else {
+            throw RestClient.RequestError(status: 0, body: "redirected to \(redirectURL.absoluteString), but it had no #fragment")
         }
         let params = Self.parseFragment(fragment)
         guard let accessToken = params["access_token"], let refreshToken = params["refresh_token"] else {
-            throw RestClient.RequestError(status: 0, body: params["error_description"] ?? "invalid_reset_link")
+            throw RestClient.RequestError(status: 0, body: "fragment had no tokens: \(fragment)")
         }
         let expiresAt: Date
         if let expiresIn = params["expires_in"].flatMap(Double.init) {
@@ -101,7 +106,7 @@ actor AuthManager {
         } else if let expiresAtEpoch = params["expires_at"].flatMap(Double.init) {
             expiresAt = Date(timeIntervalSince1970: expiresAtEpoch)
         } else {
-            throw RestClient.RequestError(status: 0, body: "invalid_reset_link")
+            throw RestClient.RequestError(status: 0, body: "fragment had tokens but no expiry: \(fragment)")
         }
 
         // Not routed through the normal `authenticated: true` path (which

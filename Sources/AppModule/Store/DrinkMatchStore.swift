@@ -121,7 +121,9 @@ final class DrinkMatchStore {
             await loadAfterSignIn(userID: userID)
             return nil
         } catch {
-            return "パスワードの再設定に失敗しました。リンクの有効期限切れ、または貼り付けたリンクをご確認ください。"
+            // Temporary diagnostic: raw error, not the generic message —
+            // revert once this flow is confirmed working on-device.
+            return "パスワードの再設定に失敗しました: \(error)"
         }
     }
 
