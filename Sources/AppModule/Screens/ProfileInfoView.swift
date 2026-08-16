@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Account/profile summary, reachable from MainView's overflow menu —
 /// shows which email address the user is signed in with, and lets them
-/// change role/airline/base (rate-limited server-side, see
+/// change their name (unrestricted — see DrinkMatchStore.updateFullName)
+/// and role/airline/base (rate-limited server-side, see
 /// DrinkMatchStore.updateIdentity).
 struct ProfileInfoView: View {
     var store: DrinkMatchStore
@@ -16,6 +17,11 @@ struct ProfileInfoView: View {
     @State private var isSubmitting = false
     @State private var editMessage: String?
 
+    @State private var isEditingName = false
+    @State private var editFullName = ""
+    @State private var isNameSubmitting = false
+    @State private var nameEditMessage: String?
+
     private var canEditIdentity: Bool { store.profile?.canEditIdentity ?? true }
 
     var body: some View {
@@ -25,6 +31,7 @@ struct ProfileInfoView: View {
 
                 infoRow(label: "サインイン中のメールアドレス", value: store.authEmail ?? "不明")
 
+                nameSection
                 identitySection
 
                 infoRow(label: "本人確認", value: store.isVerified ? "確認済み" : "未確認")
@@ -38,6 +45,38 @@ struct ProfileInfoView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .foregroundStyle(Theme.text)
+    }
+
+    private var nameSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isEditingName {
+                Text("お名前").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                TextField("例: YOSUKE TANAKA", text: $editFullName)
+                    .font(.system(size: 14))
+                    .padding(10)
+                    .background(Theme.field)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+
+                HStack(spacing: 12) {
+                    Button("保存") { Task { await submitFullName() } }
+                        .buttonStyle(BoardButtonStyle(isDisabled: isNameSubmitting))
+                        .disabled(isNameSubmitting)
+                    Button("キャンセル") { isEditingName = false }
+                        .buttonStyle(BoardOutlineButtonStyle())
+                        .disabled(isNameSubmitting)
+                }
+                .padding(.top, 4)
+
+                if let nameEditMessage {
+                    Text(nameEditMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
+                }
+            } else {
+                infoRow(label: "お名前", value: store.profile?.fullName ?? "未登録")
+                Button("変更する") { startEditingName() }
+                    .buttonStyle(BoardOutlineButtonStyle())
+            }
+        }
     }
 
     private var identitySection: some View {
@@ -97,6 +136,21 @@ struct ProfileInfoView: View {
                         .foregroundStyle(Theme.faint)
                 }
             }
+        }
+    }
+
+    private func startEditingName() {
+        editFullName = store.profile?.fullName ?? ""
+        nameEditMessage = nil
+        isEditingName = true
+    }
+
+    private func submitFullName() async {
+        isNameSubmitting = true
+        defer { isNameSubmitting = false }
+        nameEditMessage = await store.updateFullName(editFullName)
+        if nameEditMessage == nil {
+            isEditingName = false
         }
     }
 

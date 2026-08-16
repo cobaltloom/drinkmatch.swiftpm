@@ -222,6 +222,24 @@ final class DrinkMatchStore {
         }
     }
 
+    /// Not rate-limited like updateIdentity — see
+    /// SupabaseRepository.updateFullName. Returns a status message to show
+    /// inline, or nil on success.
+    func updateFullName(_ fullName: String) async -> String? {
+        guard let userID = authUserID else { return nil }
+        let trimmed = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "お名前を入力してください。" }
+        let previous = profile?.fullName
+        profile?.fullName = trimmed
+        do {
+            try await SupabaseRepository.updateFullName(userID: userID, fullName: trimmed)
+            return nil
+        } catch {
+            profile?.fullName = previous ?? trimmed
+            return "お名前の更新に失敗しました。"
+        }
+    }
+
     func updateDisplayPreference(displayMode: DisplayMode, nickname: String) async {
         guard let userID = authUserID else { return }
         do {

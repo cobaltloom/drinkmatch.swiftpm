@@ -63,6 +63,15 @@ enum SupabaseRepository {
         )
     }
 
+    /// Not rate-limited like updateIdentity — a legal-name change (e.g.
+    /// marriage) isn't a matching-abuse vector the way role/airline/base
+    /// are. `users.full_name` still has a `trim(full_name) <> ''` check
+    /// constraint server-side.
+    static func updateFullName(userID: UUID, fullName: String) async throws {
+        struct Patch: Encodable { var fullName: String; enum CodingKeys: String, CodingKey { case fullName = "full_name" } }
+        try await PostgREST.update("users", Patch(fullName: fullName), filters: [RestClient.eq("id", userID)])
+    }
+
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {
         struct Patch: Encodable {
             var displayMode: String
