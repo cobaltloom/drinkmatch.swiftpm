@@ -59,6 +59,21 @@ struct SignInView: View {
                     if let storeMessage = store.lastErrorMessage {
                         Text(storeMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
                     }
+
+                    VStack(spacing: 4) {
+                        Text("登録・サインインすることで、利用規約とプライバシーポリシーに同意したものとみなされます。")
+                            .font(.system(size: 10))
+                            .foregroundStyle(Theme.faint)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 16) {
+                            Link("利用規約", destination: termsOfUseURL)
+                            Link("プライバシーポリシー", destination: privacyPolicyURL)
+                        }
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.muted)
+                    }
+                    .padding(.top, 10)
                 }
                 .frame(maxWidth: 320)
             }

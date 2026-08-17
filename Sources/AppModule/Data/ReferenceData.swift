@@ -28,6 +28,18 @@ let autoAcceptOfferFeatureEnabled = false
 /// that verifies purchases of this product.
 let subscriptionProductID = "com.translate5jp.drinkmatch.standard.monthly"
 
+/// App Store Review Guideline 3.1.2 requires a functional link to the
+/// Privacy Policy (and Terms of Use) at or near the subscription purchase
+/// button. Hosted via GitHub Pages (docs/privacy.html in this repo) since
+/// there's no custom domain; enable it once at
+/// github.com/translate5jp/drinkmatch.swiftpm/settings/pages
+/// (Source: Deploy from a branch → this branch → /docs).
+let privacyPolicyURL = URL(string: "https://translate5jp.github.io/drinkmatch.swiftpm/privacy.html")!
+
+/// Apple's standard EULA — used as-is rather than hosting a custom one,
+/// since the app doesn't need terms beyond what it already covers.
+let termsOfUseURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+
 enum Roles {
     static let all: [Role] = [
         Role(code: "CPT", label: "機長"),

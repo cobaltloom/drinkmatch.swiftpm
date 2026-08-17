@@ -55,6 +55,15 @@ struct PaywallGateView: View {
                 }
                 .buttonStyle(BoardButtonStyle(isDisabled: store.isPurchasing))
                 .disabled(store.isPurchasing)
+
+                // App Store Review Guideline 3.1.2: subscription title,
+                // length, and price, all near the purchase button.
+                Text("「新しい人を探す」月額プラン: 1ヶ月ごとに\(product.displayPrice)で自動更新されます。解約しない限り自動的に更新され、解約は次回更新日の24時間前までにApp Storeの設定から行ってください。")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.faint)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
             } else {
                 ProgressView().tint(Theme.amber)
                     .frame(maxWidth: .infinity)
@@ -64,6 +73,14 @@ struct PaywallGateView: View {
             Button("購入を復元") { Task { await store.restorePurchases() } }
                 .buttonStyle(BoardChromeButtonStyle())
                 .padding(.top, 8)
+
+            HStack(spacing: 16) {
+                Link("利用規約", destination: termsOfUseURL)
+                Link("プライバシーポリシー", destination: privacyPolicyURL)
+            }
+            .font(.system(size: 11))
+            .foregroundStyle(Theme.muted)
+            .padding(.top, 10)
         }
         .task { await store.loadSubscriptionProduct() }
         .task { await store.loadStrangerCandidateCount() }
