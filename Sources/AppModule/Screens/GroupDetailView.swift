@@ -23,19 +23,26 @@ struct GroupDetailView: View {
 
             VStack(spacing: 6) {
                 ForEach(group.members) { member in
-                    HStack {
-                        HStack(alignment: .firstTextBaseline, spacing: 0) {
-                            Text(member.person.role).splitFlap(12).foregroundStyle(Theme.amber)
-                            Text("  \(member.person.fullName ?? member.person.name)").font(.system(size: 12))
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Text(member.person.role).splitFlap(12).foregroundStyle(Theme.amber)
+                                Text("  \(member.person.fullName ?? member.person.name)").font(.system(size: 12))
+                            }
+                            Spacer()
+                            if member.status == .accepted {
+                                Text("承諾済み").font(.system(size: 11)).foregroundStyle(Theme.green)
+                            } else if member.id == myUserID {
+                                Button("参加する") { onAcceptOwnMembership() }
+                                    .buttonStyle(BoardOutlineButtonStyle())
+                            } else {
+                                Text("承諾待ち").font(.system(size: 11)).foregroundStyle(Theme.amberDim)
+                            }
                         }
-                        Spacer()
-                        if member.status == .accepted {
-                            Text("承諾済み").font(.system(size: 11)).foregroundStyle(Theme.green)
-                        } else if member.id == myUserID {
-                            Button("参加する") { onAcceptOwnMembership() }
-                                .buttonStyle(BoardOutlineButtonStyle())
-                        } else {
-                            Text("承諾待ち").font(.system(size: 11)).foregroundStyle(Theme.amberDim)
+                        // Only ever populated for an accepted member — see
+                        // get_group_offer_members_info in drinkmatch-backend.
+                        if let contactInfo = member.person.contactInfo, !contactInfo.isEmpty {
+                            Text("連絡先: \(contactInfo)").font(.system(size: 11)).foregroundStyle(Theme.amber)
                         }
                     }
                     .padding(.horizontal, 10)

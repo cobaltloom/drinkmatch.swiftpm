@@ -42,7 +42,7 @@ enum SupabaseRepository {
     static func fetchProfile(userID: UUID) async throws -> UserRow? {
         let rows: [UserRow] = try await PostgREST.select(
             "users",
-            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year,identity_updated_at",
+            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year,identity_updated_at,contact_info",
             filters: [RestClient.eq("id", userID)],
             limit: 1
         )
@@ -70,6 +70,14 @@ enum SupabaseRepository {
     static func updateFullName(userID: UUID, fullName: String) async throws {
         struct Patch: Encodable { var fullName: String; enum CodingKeys: String, CodingKey { case fullName = "full_name" } }
         try await PostgREST.update("users", Patch(fullName: fullName), filters: [RestClient.eq("id", userID)])
+    }
+
+    /// Not rate-limited — see get_offer_counterpart/get_group_offer_members_info
+    /// in drinkmatch-backend for where this is actually read back (only by a
+    /// counterpart with an accepted match, never anyone else).
+    static func updateContactInfo(userID: UUID, contactInfo: String) async throws {
+        struct Patch: Encodable { var contactInfo: String; enum CodingKeys: String, CodingKey { case contactInfo = "contact_info" } }
+        try await PostgREST.update("users", Patch(contactInfo: contactInfo), filters: [RestClient.eq("id", userID)])
     }
 
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {

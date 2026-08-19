@@ -22,6 +22,11 @@ struct ProfileInfoView: View {
     @State private var isNameSubmitting = false
     @State private var nameEditMessage: String?
 
+    @State private var isEditingContactInfo = false
+    @State private var editContactInfo = ""
+    @State private var isContactInfoSubmitting = false
+    @State private var contactInfoEditMessage: String?
+
     private var canEditIdentity: Bool { store.profile?.canEditIdentity ?? true }
 
     var body: some View {
@@ -32,6 +37,7 @@ struct ProfileInfoView: View {
                 infoRow(label: "サインイン中のメールアドレス", value: store.authEmail ?? "不明")
 
                 nameSection
+                contactInfoSection
                 identitySection
 
                 infoRow(label: "本人確認", value: store.isVerified ? "確認済み" : "未確認")
@@ -74,6 +80,42 @@ struct ProfileInfoView: View {
             } else {
                 infoRow(label: "お名前", value: store.profile?.fullName ?? "未登録")
                 Button("変更する") { startEditingName() }
+                    .buttonStyle(BoardOutlineButtonStyle())
+            }
+        }
+    }
+
+    private var contactInfoSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isEditingContactInfo {
+                Text("連絡先(LINE ID・電話番号など)").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                TextField("例: LINE ID: xxxxx", text: $editContactInfo)
+                    .font(.system(size: 14))
+                    .padding(10)
+                    .background(Theme.field)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+
+                HStack(spacing: 12) {
+                    Button("保存") { Task { await submitContactInfo() } }
+                        .buttonStyle(BoardButtonStyle(isDisabled: isContactInfoSubmitting))
+                        .disabled(isContactInfoSubmitting)
+                    Button("キャンセル") { isEditingContactInfo = false }
+                        .buttonStyle(BoardOutlineButtonStyle())
+                        .disabled(isContactInfoSubmitting)
+                }
+                .padding(.top, 4)
+
+                if let contactInfoEditMessage {
+                    Text(contactInfoEditMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
+                }
+
+                Text("マッチが成立した相手にのみ表示されます。誘いを送っただけの段階では表示されません。")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.faint)
+            } else {
+                infoRow(label: "連絡先(マッチ成立後に相手へ表示)", value: store.profile?.contactInfo ?? "未登録")
+                Button("変更する") { startEditingContactInfo() }
                     .buttonStyle(BoardOutlineButtonStyle())
             }
         }
@@ -151,6 +193,21 @@ struct ProfileInfoView: View {
         nameEditMessage = await store.updateFullName(editFullName)
         if nameEditMessage == nil {
             isEditingName = false
+        }
+    }
+
+    private func startEditingContactInfo() {
+        editContactInfo = store.profile?.contactInfo ?? ""
+        contactInfoEditMessage = nil
+        isEditingContactInfo = true
+    }
+
+    private func submitContactInfo() async {
+        isContactInfoSubmitting = true
+        defer { isContactInfoSubmitting = false }
+        contactInfoEditMessage = await store.updateContactInfo(editContactInfo)
+        if contactInfoEditMessage == nil {
+            isEditingContactInfo = false
         }
     }
 

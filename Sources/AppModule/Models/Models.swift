@@ -55,6 +55,10 @@ struct Person: Identifiable, Hashable {
     /// person never set it. Only meaningful for stranger-search candidates,
     /// where it powers the age-difference filter in StrangersTabView.
     var birthYear: Int? = nil
+    /// LINE ID, phone number, etc. — only ever populated once a match is
+    /// actually accepted (see get_offer_counterpart/get_group_offer_members_info
+    /// in drinkmatch-backend); nil everywhere else, including a pending offer.
+    var contactInfo: String? = nil
 
     func displayName(showFullName: Bool) -> String {
         showFullName ? (fullName ?? name) : name
@@ -184,6 +188,10 @@ struct UserProfile {
     /// to distant past so a freshly-onboarded profile (which hasn't round-
     /// tripped through the server yet) never looks like it's on cooldown.
     var identityUpdatedAt: Date = .distantPast
+    /// LINE ID, phone number, etc. — only ever shared with someone once a
+    /// match with them is accepted (see Person.contactInfo). Optional; nil
+    /// means the user hasn't set one.
+    var contactInfo: String? = nil
 
     /// Name shown to strangers: nickname if chosen, otherwise generated initials.
     var strangerDisplayName: String {

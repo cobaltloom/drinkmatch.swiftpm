@@ -196,6 +196,19 @@ struct MatchesView: View {
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.fieldBorder))
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             } else {
+                if let contactInfo = match.person.contactInfo, !contactInfo.isEmpty {
+                    Text("相手の連絡先: \(contactInfo)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.amber)
+                        .padding(.bottom, 4)
+                } else {
+                    Text("相手はまだ連絡先を登録していません。集合場所の詳細はここでの集合案でお伝えください。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.faint)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, 4)
+                }
+
                 Text("相手のステイ先(緑の日付をタップして集合案を送信)")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.muted)

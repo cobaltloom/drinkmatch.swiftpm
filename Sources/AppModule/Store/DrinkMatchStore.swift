@@ -240,6 +240,21 @@ final class DrinkMatchStore {
         }
     }
 
+    /// Not rate-limited — see SupabaseRepository.updateContactInfo.
+    func updateContactInfo(_ contactInfo: String) async -> String? {
+        guard let userID = authUserID else { return nil }
+        let trimmed = contactInfo.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previous = profile?.contactInfo
+        profile?.contactInfo = trimmed.isEmpty ? nil : trimmed
+        do {
+            try await SupabaseRepository.updateContactInfo(userID: userID, contactInfo: trimmed)
+            return nil
+        } catch {
+            profile?.contactInfo = previous
+            return "連絡先の更新に失敗しました。"
+        }
+    }
+
     func updateDisplayPreference(displayMode: DisplayMode, nickname: String) async {
         guard let userID = authUserID else { return }
         do {

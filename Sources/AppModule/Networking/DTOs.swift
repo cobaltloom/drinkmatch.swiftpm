@@ -178,6 +178,7 @@ struct UserRow: Decodable {
     /// timestamp in this file (see NetworkConversions.swift's header
     /// comment) — converted to `Date` only at the `asUserProfile` boundary.
     var identityUpdatedAt: String
+    var contactInfo: String?
 
     enum CodingKeys: String, CodingKey {
         case id, role, airline, note, nickname
@@ -189,6 +190,7 @@ struct UserRow: Decodable {
         case isSubscribed = "is_subscribed"
         case birthYear = "birth_year"
         case identityUpdatedAt = "identity_updated_at"
+        case contactInfo = "contact_info"
     }
 
     var isVerified: Bool { verificationMethod != nil }
@@ -200,7 +202,8 @@ struct UserRow: Decodable {
             // .distantPast on a parse failure means "no cooldown" rather than
             // wrongly locking editing forever — the server enforces the real
             // cooldown regardless of what the client shows.
-            identityUpdatedAt: date(fromPostgresTimestamp: identityUpdatedAt) ?? .distantPast
+            identityUpdatedAt: date(fromPostgresTimestamp: identityUpdatedAt) ?? .distantPast,
+            contactInfo: contactInfo
         )
     }
 
@@ -336,6 +339,7 @@ struct GroupMemberInfoRow: Decodable, Identifiable {
     var yearsOfService: Int?
     var displayName: String
     var status: OfferStatus
+    var contactInfo: String?
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
@@ -343,6 +347,7 @@ struct GroupMemberInfoRow: Decodable, Identifiable {
         case baseAirport = "base_airport"
         case yearsOfService = "years_of_service"
         case displayName = "display_name"
+        case contactInfo = "contact_info"
     }
 
     var id: UUID { userId }
@@ -354,7 +359,7 @@ struct GroupMemberInfoRow: Decodable, Identifiable {
     /// returns the same correct value regardless of which flag is passed.
     var asPerson: Person {
         Person(id: userId, name: displayName, fullName: displayName, role: role, airline: airline ?? "",
-               base: baseAirport, years: yearsOfService ?? 0, note: note ?? "", stays: [])
+               base: baseAirport, years: yearsOfService ?? 0, note: note ?? "", stays: [], contactInfo: contactInfo)
     }
 }
 
@@ -366,6 +371,7 @@ struct OfferCounterpartRow: Decodable {
     var note: String?
     var yearsOfService: Int?
     var displayName: String
+    var contactInfo: String?
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
@@ -373,12 +379,13 @@ struct OfferCounterpartRow: Decodable {
         case baseAirport = "base_airport"
         case yearsOfService = "years_of_service"
         case displayName = "display_name"
+        case contactInfo = "contact_info"
     }
 
     /// See the identical note on GroupMemberInfoRow.asPerson.
     var asPerson: Person {
         Person(id: userId, name: displayName, fullName: displayName, role: role, airline: airline ?? "",
-               base: baseAirport, years: yearsOfService ?? 0, note: note ?? "", stays: [])
+               base: baseAirport, years: yearsOfService ?? 0, note: note ?? "", stays: [], contactInfo: contactInfo)
     }
 }
 
