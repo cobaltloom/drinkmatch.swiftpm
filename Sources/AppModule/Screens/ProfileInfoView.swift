@@ -43,6 +43,14 @@ struct ProfileInfoView: View {
                 infoRow(label: "本人確認", value: store.isVerified ? "確認済み" : "未確認")
                 infoRow(label: "新しい人を探す機能", value: store.isSubscribed ? "利用中" : "未加入")
 
+                HStack(spacing: 16) {
+                    Link("利用規約", destination: termsOfUseURL)
+                    Link("プライバシーポリシー", destination: privacyPolicyURL)
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.muted)
+                .padding(.top, 4)
+
                 Button("閉じる") { dismiss() }
                     .buttonStyle(BoardChromeButtonStyle())
                     .padding(.top, 8)
