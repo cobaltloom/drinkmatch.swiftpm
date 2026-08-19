@@ -531,12 +531,17 @@ final class DrinkMatchStore {
 
     // MARK: - Offer / match status lookup
 
+    /// Ignores cancelled offers — cancelling one is meant to free the
+    /// candidate up to be offered to again (see PersonCardView's "🍻 誘う"),
+    /// not leave them permanently stuck showing "キャンセルしました" the way
+    /// an expired offer does. The Matches tab still lists a cancelled offer
+    /// as history; it just stops counting here.
     func status(for personID: UUID) -> OfferStatus? {
-        matches.first { $0.id == personID }?.status
+        matches.first { $0.id == personID && $0.status != .cancelled }?.status
     }
 
     func offerID(for personID: UUID) -> UUID? {
-        matches.first { $0.id == personID }?.offerID
+        matches.first { $0.id == personID && $0.status != .cancelled }?.offerID
     }
 
     // MARK: - Matches (offers + groups)
@@ -580,7 +585,7 @@ final class DrinkMatchStore {
     }
 
     func sendOffer(to person: Person, day: Int, location: String, autoAccept: Bool) async {
-        guard !matches.contains(where: { $0.id == person.id }) else { return }
+        guard status(for: person.id) == nil else { return }
         do {
             _ = try await SupabaseRepository.createOffer(toUserID: person.id, day: day, location: location, autoAccept: autoAccept)
             await loadMatches()
