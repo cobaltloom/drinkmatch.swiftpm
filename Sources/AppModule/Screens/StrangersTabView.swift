@@ -142,6 +142,7 @@ private struct StrangersSearchView: View {
                             person: person,
                             overlap: store.overlapCache[person.id] ?? [],
                             offerStatus: store.status(for: person.id),
+                            offerID: store.offerID(for: person.id),
                             showFullName: false,
                             showBase: false,
                             defaultAutoAccept: false,
@@ -149,6 +150,7 @@ private struct StrangersSearchView: View {
                                 Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }
                             },
                             onPass: { person in Task { await store.pass(person) } },
+                            onCancelOffer: { offerID in Task { await store.cancelOffer(offerID: offerID) } },
                             onReport: { person, reason, details in
                                 await store.submitReport(reportedUserID: person.id, reason: reason, details: details)
                             },

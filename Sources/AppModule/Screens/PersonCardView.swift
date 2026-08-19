@@ -10,6 +10,8 @@ struct PersonCardView: View {
     /// can't be computed locally the way the mock-data prototype did.
     var overlap: [StayOverlap]
     var offerStatus: OfferStatus?
+    /// Needed to cancel a pending offer — nil whenever offerStatus is nil.
+    var offerID: UUID?
     var showFullName: Bool
     /// Stranger search hides base airport (the user asked strangers not see
     /// where someone is based); friends still see it.
@@ -31,6 +33,10 @@ struct PersonCardView: View {
     /// passed_candidates at all, so the button used to do nothing when
     /// shown on a friend card. FriendsTabView passes nil for this reason.
     var onPass: ((Person) -> Void)?
+    /// nil hides the "キャンセル" button entirely, same rationale as onOffer
+    /// being nil for FriendsTabView — cancelling is only meaningful for a
+    /// stranger offer sent through this card's own "🍻 誘う" button.
+    var onCancelOffer: ((UUID) -> Void)?
     var onReport: (Person, ReportReason, String) async -> String?
     var onBlock: (Person) async -> Void
 
@@ -44,19 +50,22 @@ struct PersonCardView: View {
         return parts.isEmpty ? nil : parts.joined(separator: " / ")
     }
 
-    init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, showFullName: Bool,
+    init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, offerID: UUID? = nil, showFullName: Bool,
          showBase: Bool,
          defaultAutoAccept: Bool,
          onOffer: ((Person, StayOverlap, Bool) -> Void)?, onPass: ((Person) -> Void)?,
+         onCancelOffer: ((UUID) -> Void)? = nil,
          onReport: @escaping (Person, ReportReason, String) async -> String?, onBlock: @escaping (Person) async -> Void) {
         self.person = person
         self.overlap = overlap
         self.offerStatus = offerStatus
+        self.offerID = offerID
         self.showFullName = showFullName
         self.showBase = showBase
         self.defaultAutoAccept = defaultAutoAccept
         self.onOffer = onOffer
         self.onPass = onPass
+        self.onCancelOffer = onCancelOffer
         self.onReport = onReport
         self.onBlock = onBlock
         _autoAccept = State(initialValue: autoAcceptOfferFeatureEnabled && defaultAutoAccept)
@@ -122,8 +131,15 @@ struct PersonCardView: View {
                 Text("マッチ成立").font(.system(size: 12)).foregroundStyle(Theme.green).padding(.top, 8)
             case .pending:
                 Text("誘い送信済み(相手の承諾待ち)").font(.system(size: 12)).foregroundStyle(Theme.amberDim).padding(.top, 8)
+                if let offerID, let onCancelOffer {
+                    Button("誘いをキャンセル") { onCancelOffer(offerID) }
+                        .buttonStyle(BoardChromeButtonStyle())
+                        .padding(.top, 6)
+                }
             case .expired:
                 Text("誘いの有効期限が切れました").font(.system(size: 12)).foregroundStyle(Theme.faint).padding(.top, 8)
+            case .cancelled:
+                Text("誘いをキャンセルしました").font(.system(size: 12)).foregroundStyle(Theme.faint).padding(.top, 8)
             case nil:
                 if autoAcceptOfferFeatureEnabled, onOffer != nil {
                     Toggle(isOn: $autoAccept) {

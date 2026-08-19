@@ -103,6 +103,7 @@ struct MatchesView: View {
         switch match.status {
         case .accepted: return "マッチ成立"
         case .expired: return "期限切れ"
+        case .cancelled: return "キャンセル済み"
         case .pending: return match.isIncoming ? "承諾待ち(あなた)" : "承諾待ち(相手)"
         }
     }
@@ -163,8 +164,8 @@ struct MatchesView: View {
                 )
             }
 
-            if match.status == .expired {
-                Text("この誘いは有効期限が切れました。")
+            if match.status == .expired || match.status == .cancelled {
+                Text(match.status == .expired ? "この誘いは有効期限が切れました。" : "この誘いはキャンセルされました。")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .padding(14)
@@ -186,6 +187,8 @@ struct MatchesView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.muted)
                             .fixedSize(horizontal: false, vertical: true)
+                        Button("誘いをキャンセル") { Task { await store.cancelOffer(offerID: match.offerID) } }
+                            .buttonStyle(BoardChromeButtonStyle())
                     }
                 }
                 .padding(14)

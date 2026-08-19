@@ -535,6 +535,10 @@ final class DrinkMatchStore {
         matches.first { $0.id == personID }?.status
     }
 
+    func offerID(for personID: UUID) -> UUID? {
+        matches.first { $0.id == personID }?.offerID
+    }
+
     // MARK: - Matches (offers + groups)
 
     func loadMatches() async {
@@ -591,6 +595,16 @@ final class DrinkMatchStore {
             await loadMatches()
         } catch {
             lastErrorMessage = "承諾に失敗しました。"
+        }
+    }
+
+    /// Sender-only — the recipient's equivalent is simply not accepting.
+    func cancelOffer(offerID: UUID) async {
+        do {
+            try await SupabaseRepository.cancelOffer(offerID: offerID)
+            await loadMatches()
+        } catch {
+            lastErrorMessage = "誘いのキャンセルに失敗しました。"
         }
     }
 

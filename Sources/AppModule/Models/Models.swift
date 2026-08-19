@@ -77,6 +77,7 @@ enum OfferStatus: String, Hashable, Codable {
     case pending
     case accepted
     case expired
+    case cancelled
 }
 
 /// A person you've sent (or received) a 1:1 drink offer with.

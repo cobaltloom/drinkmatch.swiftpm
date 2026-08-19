@@ -244,6 +244,10 @@ enum SupabaseRepository {
         try await PostgREST.rpcVoid("accept_offer", params: OfferIDParams(offerId: offerID))
     }
 
+    static func cancelOffer(offerID: UUID) async throws {
+        try await PostgREST.rpcVoid("cancel_offer", params: OfferIDParams(offerId: offerID))
+    }
+
     static func fetchOfferCounterpart(offerID: UUID) async throws -> OfferCounterpartRow? {
         let rows: [OfferCounterpartRow] = try await PostgREST.rpc("get_offer_counterpart", params: OfferIDParams(offerId: offerID))
         return rows.first
