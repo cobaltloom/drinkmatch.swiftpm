@@ -255,6 +255,20 @@ final class DrinkMatchStore {
         }
     }
 
+    /// Not rate-limited — see SupabaseRepository.updateBirthYear.
+    func updateBirthYear(_ birthYear: Int?) async -> String? {
+        guard let userID = authUserID else { return nil }
+        let previous = profile?.birthYear
+        profile?.birthYear = birthYear
+        do {
+            try await SupabaseRepository.updateBirthYear(userID: userID, birthYear: birthYear)
+            return nil
+        } catch {
+            profile?.birthYear = previous
+            return "生まれ年の更新に失敗しました。"
+        }
+    }
+
     func updateDisplayPreference(displayMode: DisplayMode, nickname: String) async {
         guard let userID = authUserID else { return }
         do {

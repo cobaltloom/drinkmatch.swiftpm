@@ -27,6 +27,16 @@ struct ProfileInfoView: View {
     @State private var isContactInfoSubmitting = false
     @State private var contactInfoEditMessage: String?
 
+    @State private var isEditingBirthYear = false
+    @State private var editBirthYear: Int?
+    @State private var isBirthYearSubmitting = false
+    @State private var birthYearEditMessage: String?
+
+    private static let birthYearOptions: [Int] = {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        return Array((currentYear - 70)...(currentYear - 18)).reversed()
+    }()
+
     private var canEditIdentity: Bool { store.profile?.canEditIdentity ?? true }
 
     var body: some View {
@@ -38,6 +48,7 @@ struct ProfileInfoView: View {
 
                 nameSection
                 contactInfoSection
+                birthYearSection
                 identitySection
 
                 infoRow(label: "本人確認", value: store.isVerified ? "確認済み" : "未確認")
@@ -124,6 +135,54 @@ struct ProfileInfoView: View {
             } else {
                 infoRow(label: "連絡先(マッチ成立後に相手へ表示)", value: store.profile?.contactInfo ?? "未登録")
                 Button("変更する") { startEditingContactInfo() }
+                    .buttonStyle(BoardOutlineButtonStyle())
+            }
+        }
+    }
+
+    private var birthYearSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isEditingBirthYear {
+                Text("生まれ年(任意・年齢が近い人を探すフィルターに使われます)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.muted)
+
+                Menu {
+                    Button("未設定") { editBirthYear = nil }
+                    ForEach(Self.birthYearOptions, id: \.self) { year in
+                        Button("\(year)年") { editBirthYear = year }
+                    }
+                } label: {
+                    HStack {
+                        Text(editBirthYear.map { "\($0)年" } ?? "未設定")
+                            .font(.system(size: 14))
+                            .foregroundStyle(editBirthYear == nil ? Theme.faint : Theme.text)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                    }
+                    .padding(10)
+                    .background(Theme.field)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
+                }
+                .menuStyle(.borderlessButton)
+
+                HStack(spacing: 12) {
+                    Button("保存") { Task { await submitBirthYear() } }
+                        .buttonStyle(BoardButtonStyle(isDisabled: isBirthYearSubmitting))
+                        .disabled(isBirthYearSubmitting)
+                    Button("キャンセル") { isEditingBirthYear = false }
+                        .buttonStyle(BoardOutlineButtonStyle())
+                        .disabled(isBirthYearSubmitting)
+                }
+                .padding(.top, 4)
+
+                if let birthYearEditMessage {
+                    Text(birthYearEditMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
+                }
+            } else {
+                infoRow(label: "生まれ年", value: store.profile?.birthYear.map { "\($0)年" } ?? "未設定")
+                Button("変更する") { startEditingBirthYear() }
                     .buttonStyle(BoardOutlineButtonStyle())
             }
         }
@@ -216,6 +275,21 @@ struct ProfileInfoView: View {
         contactInfoEditMessage = await store.updateContactInfo(editContactInfo)
         if contactInfoEditMessage == nil {
             isEditingContactInfo = false
+        }
+    }
+
+    private func startEditingBirthYear() {
+        editBirthYear = store.profile?.birthYear
+        birthYearEditMessage = nil
+        isEditingBirthYear = true
+    }
+
+    private func submitBirthYear() async {
+        isBirthYearSubmitting = true
+        defer { isBirthYearSubmitting = false }
+        birthYearEditMessage = await store.updateBirthYear(editBirthYear)
+        if birthYearEditMessage == nil {
+            isEditingBirthYear = false
         }
     }
 

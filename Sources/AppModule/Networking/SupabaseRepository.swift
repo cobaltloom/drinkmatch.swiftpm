@@ -80,6 +80,13 @@ enum SupabaseRepository {
         try await PostgREST.update("users", Patch(contactInfo: contactInfo), filters: [RestClient.eq("id", userID)])
     }
 
+    /// Not rate-limited — a self-reported birth year isn't a matching-abuse
+    /// vector. Optional; nil clears it (see UserProfile.birthYear).
+    static func updateBirthYear(userID: UUID, birthYear: Int?) async throws {
+        struct Patch: Encodable { var birthYear: Int?; enum CodingKeys: String, CodingKey { case birthYear = "birth_year" } }
+        try await PostgREST.update("users", Patch(birthYear: birthYear), filters: [RestClient.eq("id", userID)])
+    }
+
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {
         struct Patch: Encodable {
             var displayMode: String
