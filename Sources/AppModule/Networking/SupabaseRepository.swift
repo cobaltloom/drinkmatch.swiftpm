@@ -42,7 +42,7 @@ enum SupabaseRepository {
     static func fetchProfile(userID: UUID) async throws -> UserRow? {
         let rows: [UserRow] = try await PostgREST.select(
             "users",
-            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year,identity_updated_at,contact_info",
+            columns: "id,role,airline,base_airport,years_of_service,full_name,note,display_mode,nickname,verification_method,is_subscribed,birth_year,birth_year_change_count,identity_updated_at,contact_info",
             filters: [RestClient.eq("id", userID)],
             limit: 1
         )
@@ -80,11 +80,13 @@ enum SupabaseRepository {
         try await PostgREST.update("users", Patch(contactInfo: contactInfo), filters: [RestClient.eq("id", userID)])
     }
 
-    /// Not rate-limited — a self-reported birth year isn't a matching-abuse
-    /// vector. Optional; nil clears it (see UserProfile.birthYear).
-    static func updateBirthYear(userID: UUID, birthYear: Int?) async throws {
-        struct Patch: Encodable { var birthYear: Int?; enum CodingKeys: String, CodingKey { case birthYear = "birth_year" } }
-        try await PostgREST.update("users", Patch(birthYear: birthYear), filters: [RestClient.eq("id", userID)])
+    /// Capped at 2 changes total server-side (see UserProfile.birthYearChangeCount)
+    /// — the onboarding-time set via createProfile doesn't count against this.
+    static func updateBirthYear(birthYear: Int?) async throws -> UserRow {
+        try await PostgREST.rpc(
+            "update_birth_year",
+            params: UpdateBirthYearParams(birthYear: birthYear)
+        )
     }
 
     static func updateDisplayPreference(userID: UUID, displayMode: DisplayMode, nickname: String) async throws {

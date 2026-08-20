@@ -255,17 +255,21 @@ final class DrinkMatchStore {
         }
     }
 
-    /// Not rate-limited — see SupabaseRepository.updateBirthYear.
+    /// Capped at 2 changes total server-side (see update_birth_year() in
+    /// drinkmatch-backend) — the onboarding-time set doesn't count against
+    /// this. Returns a status message to show inline, or nil on success.
     func updateBirthYear(_ birthYear: Int?) async -> String? {
-        guard let userID = authUserID else { return nil }
-        let previous = profile?.birthYear
+        let previous = profile
         profile?.birthYear = birthYear
         do {
-            try await SupabaseRepository.updateBirthYear(userID: userID, birthYear: birthYear)
+            let row = try await SupabaseRepository.updateBirthYear(birthYear: birthYear)
+            profile = row.asUserProfile
             return nil
         } catch {
-            profile?.birthYear = previous
-            return "生まれ年の更新に失敗しました。"
+            profile = previous
+            return BackendErrorCode.from(error) == .birthYearChangeLimit
+                ? "生まれ年を変更できるのは合計2回までです。"
+                : "生まれ年の更新に失敗しました。"
         }
     }
 

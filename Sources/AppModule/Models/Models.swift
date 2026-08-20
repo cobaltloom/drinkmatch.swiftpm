@@ -183,6 +183,12 @@ struct UserProfile {
     /// approximate age-difference filter in stranger search without storing
     /// anything more identifying. Optional; nil means the user hasn't set it.
     var birthYear: Int? = nil
+    /// How many times birth year has been changed after onboarding —
+    /// `update_birth_year()` on the backend rejects a change once this
+    /// reaches 2 (the initial onboarding-time set via create_profile
+    /// doesn't count). Defaults to 0 for the same freshly-onboarded reason
+    /// as identityUpdatedAt below.
+    var birthYearChangeCount: Int = 0
     /// When role/airline/base were last changed — `update_identity()` on
     /// the backend rejects another change within 30 days of this. Defaults
     /// to distant past so a freshly-onboarded profile (which hasn't round-
@@ -212,6 +218,11 @@ struct UserProfile {
     }
 
     var canEditIdentity: Bool { Date() >= nextIdentityEditDate }
+
+    /// Mirrors update_birth_year()'s server-side 2-change cap so the UI can
+    /// hide the edit button once it's used up, instead of only finding out
+    /// after a failed attempt. The server is still the real enforcement point.
+    var canEditBirthYear: Bool { birthYearChangeCount < 2 }
 }
 
 /// Top-level screen the root view is currently showing.

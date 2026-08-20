@@ -182,8 +182,17 @@ struct ProfileInfoView: View {
                 }
             } else {
                 infoRow(label: "生まれ年", value: store.profile?.birthYear.map { "\($0)年" } ?? "未設定")
-                Button("変更する") { startEditingBirthYear() }
-                    .buttonStyle(BoardOutlineButtonStyle())
+                if store.profile?.canEditBirthYear ?? true {
+                    Button("変更する") { startEditingBirthYear() }
+                        .buttonStyle(BoardOutlineButtonStyle())
+                    Text("生まれ年を変更できるのは合計2回までです(残り\(2 - (store.profile?.birthYearChangeCount ?? 0))回)。")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Theme.faint)
+                } else {
+                    Text("生まれ年は変更回数の上限(2回)に達しました。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.faint)
+                }
             }
         }
     }
