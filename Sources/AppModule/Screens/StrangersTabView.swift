@@ -145,6 +145,7 @@ private struct StrangersSearchView: View {
                             offerID: store.offerID(for: person.id),
                             showFullName: false,
                             showBase: false,
+                            showAffiliation: false,
                             defaultAutoAccept: false,
                             onOffer: { person, overlap, autoAccept in
                                 Task { await store.sendOffer(to: person, day: overlap.day, location: overlap.location, autoAccept: autoAccept) }

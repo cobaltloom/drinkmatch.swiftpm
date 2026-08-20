@@ -16,6 +16,11 @@ struct PersonCardView: View {
     /// Stranger search hides base airport (the user asked strangers not see
     /// where someone is based); friends still see it.
     var showBase: Bool
+    /// Stranger search hides the airline too (the user asked strangers not
+    /// see who someone works for); friends still see it. When false, the
+    /// person's initials/nickname take the airline's place as the card's
+    /// bold headline instead of trailing in parentheses.
+    var showAffiliation: Bool
     var defaultAutoAccept: Bool
     /// The backend pins an offer to one specific day + airport at creation
     /// time (handoff doc §7's OFFERS.day/airport_code), so — unlike the
@@ -52,6 +57,7 @@ struct PersonCardView: View {
 
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, offerID: UUID? = nil, showFullName: Bool,
          showBase: Bool,
+         showAffiliation: Bool = true,
          defaultAutoAccept: Bool,
          onOffer: ((Person, StayOverlap, Bool) -> Void)?, onPass: ((Person) -> Void)?,
          onCancelOffer: ((UUID) -> Void)? = nil,
@@ -62,6 +68,7 @@ struct PersonCardView: View {
         self.offerID = offerID
         self.showFullName = showFullName
         self.showBase = showBase
+        self.showAffiliation = showAffiliation
         self.defaultAutoAccept = defaultAutoAccept
         self.onOffer = onOffer
         self.onPass = onPass
@@ -91,12 +98,15 @@ struct PersonCardView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                if let affiliationLine {
+                if showAffiliation, let affiliationLine {
                     Text(affiliationLine).font(.system(size: 14, weight: .bold))
+                    Text("(\(person.displayName(showFullName: showFullName)))")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.faint)
+                } else {
+                    Text(person.displayName(showFullName: showFullName))
+                        .font(.system(size: 14, weight: .bold))
                 }
-                Text("(\(person.displayName(showFullName: showFullName)))")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.faint)
             }
             .padding(.top, 4)
 
