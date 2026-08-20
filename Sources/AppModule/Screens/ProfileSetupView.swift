@@ -143,11 +143,11 @@ struct ProfileSetupView: View {
         Menu {
             Button("未設定") { birthYear = nil }
             ForEach(Self.birthYearOptions, id: \.self) { year in
-                Button("\(year)年") { birthYear = year }
+                Button("\(String(year))年") { birthYear = year }
             }
         } label: {
             HStack {
-                Text(birthYear.map { "\($0)年" } ?? "未設定")
+                Text(birthYear.map { "\(String($0))年" } ?? "未設定")
                     .font(.system(size: 14))
                     .foregroundStyle(birthYear == nil ? Theme.faint : Theme.text)
                 Spacer()
