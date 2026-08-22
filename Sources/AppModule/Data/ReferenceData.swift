@@ -50,6 +50,7 @@ enum Roles {
         Role(code: "GS", label: "グランドスタッフ"),
         Role(code: "INST", label: "訓練教官"),
         Role(code: "CGO", label: "貨物取扱担当"),
+        Role(code: "OTHER", label: "その他"),
     ]
 
     static func label(for code: String) -> String {
