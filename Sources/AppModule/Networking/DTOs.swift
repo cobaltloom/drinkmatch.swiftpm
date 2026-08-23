@@ -51,6 +51,20 @@ struct UpdateBirthYearParams: Encodable {
     enum CodingKeys: String, CodingKey { case birthYear = "p_birth_year" }
 }
 
+struct RequestFriendParams: Encodable {
+    var code: String
+    enum CodingKeys: String, CodingKey { case code = "p_code" }
+}
+
+struct RespondFriendRequestParams: Encodable {
+    var requestId: UUID
+    var accept: Bool
+    enum CodingKeys: String, CodingKey {
+        case requestId = "p_request_id"
+        case accept = "p_accept"
+    }
+}
+
 struct EmailParams: Encodable {
     var email: String
     enum CodingKeys: String, CodingKey { case email = "p_email" }
@@ -277,6 +291,29 @@ struct FriendOverlapRow: Decodable, Identifiable {
     var asPerson: Person {
         Person(id: friendId, name: fullName, fullName: fullName, role: role, airline: airline ?? "",
                base: baseAirport, years: 0, note: note ?? "", stays: [])
+    }
+}
+
+struct FriendRequestRow: Decodable, Identifiable {
+    var requestId: UUID
+    var fromUserId: UUID
+    var fullName: String
+    var role: String
+    var airline: String?
+    var baseAirport: String
+
+    enum CodingKeys: String, CodingKey {
+        case requestId = "request_id"
+        case fromUserId = "from_user_id"
+        case fullName = "full_name"
+        case role, airline
+        case baseAirport = "base_airport"
+    }
+
+    var id: UUID { requestId }
+
+    var asFriendRequest: FriendRequest {
+        FriendRequest(id: requestId, fromUserID: fromUserId, fullName: fullName, role: role, airline: airline ?? "", base: baseAirport)
     }
 }
 

@@ -188,25 +188,32 @@ enum SupabaseRepository {
 
     // MARK: - Friends
 
-    static func issueInviteCode() async throws -> String {
-        try await PostgREST.rpc("issue_invite_code")
+    /// Fixed per-user code — never regenerated, unlike the old
+    /// issue_invite_code(). See get_or_create_invite_code() in
+    /// drinkmatch-backend.
+    static func getOrCreateInviteCode() async throws -> String {
+        try await PostgREST.rpc("get_or_create_invite_code")
     }
 
-    static func redeemInviteCode(code: String) async throws {
-        try await PostgREST.rpcVoid("redeem_invite_code", params: CodeParams(code: code))
+    /// Creates a pending friend_requests row rather than an immediate
+    /// friendship — see request_friend_via_code() in drinkmatch-backend.
+    static func requestFriend(code: String) async throws {
+        try await PostgREST.rpcVoid("request_friend_via_code", params: RequestFriendParams(code: code))
+    }
+
+    static func fetchIncomingFriendRequests() async throws -> [FriendRequestRow] {
+        try await PostgREST.rpc("list_incoming_friend_requests")
+    }
+
+    static func respondFriendRequest(requestID: UUID, accept: Bool) async throws {
+        try await PostgREST.rpcVoid(
+            "respond_friend_request",
+            params: RespondFriendRequestParams(requestId: requestID, accept: accept)
+        )
     }
 
     static func fetchFriendsWithOverlap() async throws -> [FriendOverlapRow] {
         try await PostgREST.rpc("list_friends_with_overlap")
-    }
-
-    static func fetchMyInviteCodes(userID: UUID) async throws -> [(code: String, used: Bool)] {
-        struct Row: Decodable { var code: String; var used: Bool }
-        let rows: [Row] = try await PostgREST.select(
-            "invite_codes", columns: "code,used",
-            filters: [RestClient.eq("owner_user_id", userID)], order: "created_at.asc"
-        )
-        return rows.map { (code: $0.code, used: $0.used) }
     }
 
     // MARK: - Strangers

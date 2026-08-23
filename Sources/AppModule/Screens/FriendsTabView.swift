@@ -17,11 +17,12 @@ struct FriendsTabView: View {
 
     @State private var code = ""
     @State private var errorMessage = ""
+    @State private var statusMessage = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             BoardCard {
-                Text("招待コードで知り合いを追加").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.bottom, 6)
+                Text("招待コードで知り合いにリクエストを送る").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.bottom, 6)
                 HStack(spacing: 8) {
                     TextField("例: PILOT2024", text: $code)
                         .textInputAutocapitalization(.characters)
@@ -32,15 +33,22 @@ struct FriendsTabView: View {
                         .background(Theme.field)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-                    Button("追加") { Task { await addFriend() } }
+                    Button("送信") { Task { await sendRequest() } }
                         .buttonStyle(BoardOutlineButtonStyle())
                 }
                 if !errorMessage.isEmpty {
                     Text(errorMessage).font(.system(size: 11)).foregroundStyle(Theme.red).padding(.top, 6)
+                } else if !statusMessage.isEmpty {
+                    Text(statusMessage).font(.system(size: 11)).foregroundStyle(Theme.green).padding(.top, 6)
                 }
             }
 
-            InviteCodeGeneratorView(codes: store.myInviteCodes, onGenerate: { Task { await store.generateInviteCode() } })
+            InviteCodeGeneratorView(code: store.myInviteCode)
+
+            IncomingFriendRequestsView(
+                requests: store.incomingFriendRequests,
+                onRespond: { request, accept in Task { await store.respondToFriendRequest(request.id, accept: accept) } }
+            )
 
             if store.friends.isEmpty {
                 Text("まだ知り合いが登録されていません。")
@@ -69,16 +77,19 @@ struct FriendsTabView: View {
         }
         .task {
             await store.loadFriends()
-            await store.loadMyInviteCodes()
+            await store.loadMyInviteCode()
+            await store.loadIncomingFriendRequests()
         }
     }
 
-    private func addFriend() async {
-        if let error = await store.addFriend(byInviteCode: code) {
+    private func sendRequest() async {
+        if let error = await store.sendFriendRequest(byInviteCode: code) {
             errorMessage = error
+            statusMessage = ""
         } else {
             code = ""
             errorMessage = ""
+            statusMessage = "リクエストを送信しました。相手が承諾すると知り合いに追加されます。"
         }
     }
 }

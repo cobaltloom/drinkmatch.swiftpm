@@ -16,8 +16,9 @@ enum BackendErrorCode: String {
     case referralCodeAlreadyUsed = "referral_code_already_used"
     case referralCodeSelfUse = "referral_code_self_use"
     case inviteCodeNotFound = "invite_code_not_found"
-    case inviteCodeAlreadyUsed = "invite_code_already_used"
     case inviteCodeSelfUse = "invite_code_self_use"
+    case alreadyFriends = "already_friends"
+    case friendRequestAlreadyPending = "friend_request_already_pending"
     case offerNotFound = "offer_not_found"
     case offerNotPending = "offer_not_pending"
     case offerNotAccepted = "offer_not_accepted"
@@ -42,7 +43,7 @@ enum BackendErrorCode: String {
     static let allCases: [BackendErrorCode] = [
         .notAuthenticated, .verificationRequired, .subscriptionRequired, .noScheduleOverlap,
         .referralCodeCapReached, .referralCodeNotFound, .referralCodeAlreadyUsed, .referralCodeSelfUse,
-        .inviteCodeNotFound, .inviteCodeAlreadyUsed, .inviteCodeSelfUse,
+        .inviteCodeNotFound, .inviteCodeSelfUse, .alreadyFriends, .friendRequestAlreadyPending,
         .offerNotFound, .offerNotPending, .offerNotAccepted, .notAuthorized, .cannotOfferSelf,
         .cannotBlockSelf, .cannotReportSelf, .userBlocked, .userNotFound,
         .ageConfirmationRequired, .identityUpdateCooldown, .birthYearChangeLimit,

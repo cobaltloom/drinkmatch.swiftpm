@@ -170,6 +170,19 @@ struct BlockedUser: Identifiable, Hashable {
     var id: UUID { userID }
 }
 
+/// An incoming request from someone who entered this user's invite code —
+/// shown with full identity (not the stranger-safe display name) since
+/// invite codes are for people who already know each other in person; see
+/// DrinkMatchStore.respondToFriendRequest.
+struct FriendRequest: Identifiable, Hashable {
+    var id: UUID
+    var fromUserID: UUID
+    var fullName: String
+    var role: String
+    var airline: String
+    var base: String
+}
+
 /// The signed-in user's profile, including how they want to appear to
 /// strangers in the new-match flow.
 struct UserProfile {

@@ -51,7 +51,8 @@ final class DrinkMatchStore {
 
     var notifications: [AppNotification] = []
     var myReferralCodes: [(code: String, used: Bool)] = []
-    var myInviteCodes: [(code: String, used: Bool)] = []
+    var myInviteCode: String?
+    var incomingFriendRequests: [FriendRequest] = []
     var blockedUsers: [BlockedUser] = []
 
     var lastErrorMessage: String?
@@ -140,7 +141,8 @@ final class DrinkMatchStore {
         isSubscribed = false
         notifications = []
         myReferralCodes = []
-        myInviteCodes = []
+        myInviteCode = nil
+        incomingFriendRequests = []
         blockedUsers = []
         screen = .profile
         authEmail = nil
@@ -491,38 +493,58 @@ final class DrinkMatchStore {
         }
     }
 
-    func addFriend(byInviteCode rawCode: String) async -> String? {
+    /// Sends a friend request to the code's owner rather than instantly
+    /// friending them — see SupabaseRepository.requestFriend and
+    /// request_friend_via_code() in drinkmatch-backend. The owner must
+    /// accept via respondToFriendRequest before loadFriends() would show
+    /// them.
+    func sendFriendRequest(byInviteCode rawCode: String) async -> String? {
         let code = rawCode.trimmingCharacters(in: .whitespaces)
         guard !code.isEmpty else { return "招待コードを入力してください" }
         do {
-            try await SupabaseRepository.redeemInviteCode(code: code)
-            await loadFriends()
+            try await SupabaseRepository.requestFriend(code: code)
             return nil
         } catch {
             switch BackendErrorCode.from(error) {
             case .inviteCodeNotFound: return "招待コードが見つかりません"
-            case .inviteCodeAlreadyUsed: return "すでに使用済みのコードです"
             case .inviteCodeSelfUse: return "自分のコードは使用できません"
-            default: return "追加に失敗しました"
+            case .alreadyFriends: return "すでに知り合いです"
+            case .friendRequestAlreadyPending: return "すでにリクエストを送信済みです"
+            default: return "リクエストの送信に失敗しました"
             }
         }
     }
 
-    func loadMyInviteCodes() async {
-        guard let userID = authUserID else { return }
+    /// Fixed per-user code, lazily created on first load — see
+    /// SupabaseRepository.getOrCreateInviteCode.
+    func loadMyInviteCode() async {
         do {
-            myInviteCodes = try await SupabaseRepository.fetchMyInviteCodes(userID: userID)
+            myInviteCode = try await SupabaseRepository.getOrCreateInviteCode()
         } catch {
             lastErrorMessage = "招待コードの読み込みに失敗しました。"
         }
     }
 
-    func generateInviteCode() async {
+    func loadIncomingFriendRequests() async {
         do {
-            _ = try await SupabaseRepository.issueInviteCode()
-            await loadMyInviteCodes()
+            let rows = try await SupabaseRepository.fetchIncomingFriendRequests()
+            incomingFriendRequests = rows.map(\.asFriendRequest)
         } catch {
-            lastErrorMessage = "招待コードの発行に失敗しました。"
+            lastErrorMessage = "知り合いリクエストの読み込みに失敗しました。"
+        }
+    }
+
+    /// Accepting creates the mutual friendship server-side; either way the
+    /// request is resolved and removed from incomingFriendRequests.
+    func respondToFriendRequest(_ requestID: UUID, accept: Bool) async {
+        do {
+            try await SupabaseRepository.respondFriendRequest(requestID: requestID, accept: accept)
+            incomingFriendRequests.removeAll { $0.id == requestID }
+            if accept {
+                await loadFriends()
+            }
+        } catch {
+            lastErrorMessage = "リクエストの処理に失敗しました。"
         }
     }
 
