@@ -22,6 +22,16 @@ let maxReferralCodesPerUser = 3
 /// needs to change.
 let autoAcceptOfferFeatureEnabled = false
 
+/// Whether "新しい人を探す" (matching with unverified-to-each-other,
+/// previously-unacquainted users) is reachable at all. Off until the legal
+/// side of facilitating in-person meetups between strangers has been
+/// reviewed — MainView hides the mode switcher entirely and always shows
+/// FriendsTabView while this is false, so no UI path can reach
+/// StrangersTabView/PaywallGateView/AirlineRequiredGateView. Backend
+/// support (subscriptions, stranger search RPCs, etc.) is untouched, so
+/// flipping this back to `true` is the only change needed to re-enable it.
+let strangerMatchingFeatureEnabled = false
+
 /// The auto-renewable subscription unlocking "新しい人を探す" (stranger
 /// matching). Must match a product ID actually created in App Store
 /// Connect — see drinkmatch-backend's README "Billing" for the server side

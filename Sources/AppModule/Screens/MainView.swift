@@ -69,29 +69,33 @@ struct MainView: View {
             }
             .padding(.bottom, 14)
 
-            StrangerDisplayNameEditorView(profile: profileBinding)
-                .padding(.bottom, 14)
+            if strangerMatchingFeatureEnabled {
+                StrangerDisplayNameEditorView(profile: profileBinding)
+                    .padding(.bottom, 14)
+            }
 
-            if store.isVerified {
+            if strangerMatchingFeatureEnabled && store.isVerified {
                 ReferralCodeGeneratorView(codes: store.myReferralCodes, onGenerate: { Task { await store.generateReferralCode() } })
                     .padding(.bottom, 14)
             }
 
-            HStack(spacing: 6) {
-                modeButton(.friends, title: "知り合いから探す")
-                modeButton(.strangers, title: "新しい人を探す")
+            if strangerMatchingFeatureEnabled {
+                HStack(spacing: 6) {
+                    modeButton(.friends, title: "知り合いから探す")
+                    modeButton(.strangers, title: "新しい人を探す")
+                }
+                .padding(.bottom, 14)
             }
-            .padding(.bottom, 14)
 
-            if store.mode == .friends {
-                FriendsTabView(store: store)
-            } else {
+            if strangerMatchingFeatureEnabled && store.mode == .strangers {
                 StrangersTabView(store: store)
+            } else {
+                FriendsTabView(store: store)
             }
         }
         .task {
             await store.loadNotifications()
-            if store.isVerified { await store.loadMyReferralCodes() }
+            if strangerMatchingFeatureEnabled && store.isVerified { await store.loadMyReferralCodes() }
         }
         .sheet(isPresented: $showingProfileInfo) {
             ProfileInfoView(store: store)
