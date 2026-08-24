@@ -47,8 +47,10 @@ struct ProfileInfoView: View {
                 infoRow(label: "サインイン中のメールアドレス", value: store.authEmail ?? "不明")
 
                 nameSection
-                contactInfoSection
-                birthYearSection
+                if strangerMatchingFeatureEnabled {
+                    contactInfoSection
+                    birthYearSection
+                }
                 identitySection
 
                 infoRow(label: "本人確認", value: store.isVerified ? "確認済み" : "未確認")
