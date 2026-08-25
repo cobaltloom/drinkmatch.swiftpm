@@ -14,7 +14,7 @@ let package = Package(
             targets: ["AppModule"],
             bundleIdentifier: "com.translate5jp.DrinkMatch",
             displayVersion: "1.0",
-            bundleVersion: "1",
+            bundleVersion: "2",
             appIcon: .asset("AppIcon"),
             accentColor: .presetColor(.blue),
             supportedDeviceFamilies: [
