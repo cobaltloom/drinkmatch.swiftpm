@@ -64,17 +64,19 @@ struct StayEntryEditorView: View {
             }
             .buttonStyle(.plain)
 
-            Button {
-                entry.visibleToStrangers.toggle()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: entry.visibleToStrangers ? "checkmark.square.fill" : "square")
-                    Text("この日は新しい人にも見せる")
+            if strangerMatchingFeatureEnabled {
+                Button {
+                    entry.visibleToStrangers.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: entry.visibleToStrangers ? "checkmark.square.fill" : "square")
+                        Text("この日は新しい人にも見せる")
+                    }
+                    .font(.system(size: 11))
+                    .foregroundStyle(entry.visibleToStrangers ? Theme.amber : Theme.muted)
                 }
-                .font(.system(size: 11))
-                .foregroundStyle(entry.visibleToStrangers ? Theme.amber : Theme.muted)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             if !friends.isEmpty {
                 Button {
