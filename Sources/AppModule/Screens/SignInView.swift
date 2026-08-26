@@ -19,9 +19,6 @@ struct SignInView: View {
             VStack(spacing: 28) {
                 VStack(spacing: 4) {
                     Text("Crew Board").splitFlap(32, weight: .bold).foregroundStyle(Theme.amber)
-                    Text("航空従事者限定・飲み会マッチング")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.muted)
                 }
                 .padding(.top, 80)
 
