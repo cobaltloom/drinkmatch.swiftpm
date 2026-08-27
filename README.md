@@ -1,4 +1,4 @@
-# drinkmatch (Crew Board)
+# drinkmatch (CrewBoard)
 
 Airline-crew drink-matching app. A SwiftUI Swift Playgrounds App project
 (this repo root is the `.swiftpm` package) backed by the

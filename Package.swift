@@ -10,7 +10,7 @@ let package = Package(
     ],
     products: [
         .iOSApplication(
-            name: "Crew Board",
+            name: "CrewBoard",
             targets: ["AppModule"],
             bundleIdentifier: "com.translate5jp.DrinkMatch",
             displayVersion: "1.0",

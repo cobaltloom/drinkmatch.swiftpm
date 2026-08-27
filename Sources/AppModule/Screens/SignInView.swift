@@ -18,7 +18,7 @@ struct SignInView: View {
         BoardScreenContainer {
             VStack(spacing: 28) {
                 VStack(spacing: 4) {
-                    Text("Crew Board").splitFlap(32, weight: .bold).foregroundStyle(Theme.amber)
+                    Text("CrewBoard").splitFlap(32, weight: .bold).foregroundStyle(Theme.amber)
                 }
                 .padding(.top, 80)
 
