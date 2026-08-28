@@ -18,7 +18,7 @@ struct ProfileSetupView: View {
     var body: some View {
         BoardScreenContainer {
             VStack(spacing: 4) {
-                Text("CrewBoard").splitFlap(28, weight: .bold).foregroundStyle(Theme.amber)
+                Text("Crew Board").splitFlap(28, weight: .bold).foregroundStyle(Theme.amber)
                 Text("ステイ先でご飯")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.muted)

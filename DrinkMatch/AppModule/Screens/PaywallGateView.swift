@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 /// Monthly-plan paywall shown after identity verification, before stranger
 /// matching unlocks. Price/product info comes live from StoreKit; purchases

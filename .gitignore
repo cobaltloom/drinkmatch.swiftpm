@@ -1,0 +1,6 @@
+# Xcode user-specific / local state — not meant to be shared
+xcuserdata/
+*.xcuserstate
+.DS_Store
+DerivedData/
+*.xcworkspace/xcuserdata/
