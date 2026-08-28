@@ -34,7 +34,7 @@ struct MainView: View {
     var body: some View {
         BoardScreenContainer {
             HStack(alignment: .firstTextBaseline) {
-                Text("Crew Board").splitFlap(20, weight: .bold).foregroundStyle(Theme.amber)
+                Text("CrewBoard").splitFlap(20, weight: .bold).foregroundStyle(Theme.amber)
                 Spacer()
                 HStack(spacing: 6) {
                     NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
