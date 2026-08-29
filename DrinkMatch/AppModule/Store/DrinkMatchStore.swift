@@ -357,13 +357,7 @@ final class DrinkMatchStore {
     /// token server-side. Safe to call every time MainView appears — a
     /// denied/no-op request is cheap, and a granted one just re-registers
     /// the same token, which upserts (see SupabaseRepository.registerPushToken).
-    ///
-    /// Not currently called from any view: Swift Playgrounds cannot add the
-    /// Push Notifications capability (confirmed via Apple's own developer
-    /// forums — it needs Xcode, i.e. a Mac, which this project doesn't
-    /// currently have access to), so registerForRemoteNotifications() would
-    /// always fail. Wire `.task { await store.enablePushNotifications() }`
-    /// back into MainView once that capability can actually be added.
+    /// Called from MainView's `.task`.
     func enablePushNotifications() async {
         PushNotificationManager.configure { [weak self] token in
             Task { await self?.registerPushToken(token) }

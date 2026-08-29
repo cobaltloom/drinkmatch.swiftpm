@@ -112,7 +112,8 @@ Store Connect.
    purchase to actually stick — without it, `PaywallGateView` will show the
    real price and let a purchase go through in Sandbox, but `isSubscribed`
    will never flip because nothing is verifying/recording it server-side.
-5. Push notifications are on hold — see "Not done yet".
+5. Push notifications need server-side setup before they actually deliver —
+   see "Not done yet" and drinkmatch-backend's README "Push notifications".
 
 ## Architecture
 
@@ -257,23 +258,20 @@ mock-data prototype's UI didn't (and couldn't) match real constraints:
 
 ## Not done yet
 
-- **Push notifications — implemented but disabled.**
-  `Notifications/AppDelegate.swift` + `PushNotificationManager.swift` +
-  `DrinkMatchStore.enablePushNotifications` are a complete, working device-token
-  registration path (writes to `push_tokens` via
-  `SupabaseRepository.registerPushToken`, which drinkmatch-backend's
-  `deliver-push-notification` Edge Function reads — see its README "Push
-  notifications"), but nothing calls `enablePushNotifications()` — it's
-  disabled at the one call site that used to exist in `MainView`. Reason:
-  the Push Notifications capability needs Apple's `aps-environment`
-  entitlement, which **Swift Playgrounds cannot add** (confirmed via
-  Apple's own developer forums — it requires Xcode, i.e. a Mac), the same
-  class of problem Sign in with Apple turned out to be (see "Status") —
-  worked around there by dropping Sign in with Apple entirely rather than
-  standing up CI infrastructure for it. Re-add
-  `.task { await store.enablePushNotifications() }` to `MainView` once
-  that capability can actually be granted (e.g. once there's Mac access to
-  add it via Xcode); nothing else needs to change.
+- **Push notifications — client side wired up, server side not yet
+  deployed.** `Notifications/AppDelegate.swift` + `PushNotificationManager.swift`
+  + `DrinkMatchStore.enablePushNotifications` (called from `MainView`'s
+  `.task`) register the device token to `push_tokens` via
+  `SupabaseRepository.registerPushToken`. The Push Notifications capability
+  (`aps-environment` in `DrinkMatch.entitlements`) needed Xcode to add —
+  the same class of problem Sign in with Apple turned out to be (see
+  "Status") — and is unblocked the same way, now that this repo is a
+  standard Xcode project. Still needed before this actually delivers a
+  push: drinkmatch-backend's `deliver-push-notification` Edge Function
+  deployed with real APNs credentials, and its Database Webhook configured
+  — see that repo's README "Push notifications" "Setup". Entirely
+  unverified end-to-end (needs a real device — the simulator can't
+  register for real APNs tokens).
 - Editing your own airline/years-of-service/note — the onboarding form never
   collected these, even though the backend and other users' cards support
   them.

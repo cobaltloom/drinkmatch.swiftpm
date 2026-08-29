@@ -117,6 +117,7 @@ struct MainView: View {
         .task {
             await store.loadNotifications()
             if strangerMatchingFeatureEnabled && store.isVerified { await store.loadMyReferralCodes() }
+            await store.enablePushNotifications()
         }
         .sheet(isPresented: $showingProfileInfo) {
             ProfileInfoView(store: store)
