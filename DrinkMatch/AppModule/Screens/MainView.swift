@@ -44,7 +44,7 @@ struct MainView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "calendar")
-                            Text("スケジュール")
+                            Text("スケジュール編集")
                         }
                     }
                     .buttonStyle(BoardChromeButtonStyle())
