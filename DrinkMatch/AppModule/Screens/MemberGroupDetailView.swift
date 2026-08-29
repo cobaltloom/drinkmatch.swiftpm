@@ -15,7 +15,7 @@ struct MemberGroupDetailView: View {
     @State private var selectedFriendID: UUID?
     @State private var inviteMessage: String?
     @State private var didCopyCode = false
-    @State private var membersExpanded = true
+    @State private var membersExpanded = false
 
     private var invitableFriends: [Person] {
         let memberIDs = Set(members.map(\.userID))
