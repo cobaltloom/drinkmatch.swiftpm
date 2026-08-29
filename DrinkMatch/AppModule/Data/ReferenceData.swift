@@ -42,9 +42,18 @@ let subscriptionProductID = "com.translate5jp.drinkmatch.standard.monthly"
 /// Privacy Policy (and Terms of Use) at or near the subscription purchase
 /// button. Hosted via GitHub Pages (docs/privacy.html in this repo) since
 /// there's no custom domain; enable it once at
-/// github.com/translate5jp/drinkmatch.swiftpm/settings/pages
+/// github.com/cobaltloom/drinkmatch.swiftpm/settings/pages
 /// (Source: Deploy from a branch → this branch → /docs).
-let privacyPolicyURL = URL(string: "https://translate5jp.github.io/drinkmatch.swiftpm/privacy.html")!
+///
+/// This is a live, GitHub-username-dependent URL baked into whatever build
+/// is currently on the App Store — a GitHub account rename (translate5jp
+/// -> cobaltloom) broke the old translate5jp.github.io URL immediately
+/// (GitHub Pages subdomains don't get the same rename redirect repository
+/// URLs do), so the already-shipped build's privacy policy link was dead
+/// until the next release picks up this fix. Renaming the account again
+/// would break this the same way — verify the URL still resolves before
+/// shipping if that ever happens again.
+let privacyPolicyURL = URL(string: "https://cobaltloom.github.io/drinkmatch.swiftpm/privacy.html")!
 
 /// Apple's standard EULA — used as-is rather than hosting a custom one,
 /// since the app doesn't need terms beyond what it already covers.
