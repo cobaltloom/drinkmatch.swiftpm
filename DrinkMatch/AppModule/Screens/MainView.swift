@@ -42,11 +42,12 @@ struct MainView: View {
                     Button {
                         store.screen = .schedule
                     } label: {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 14))
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar")
+                            Text("スケジュール")
+                        }
                     }
                     .buttonStyle(BoardChromeButtonStyle())
-                    .accessibilityLabel("スケジュール編集")
                     if strangerMatchingFeatureEnabled {
                         Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
                             .buttonStyle(BoardChromeButtonStyle())
