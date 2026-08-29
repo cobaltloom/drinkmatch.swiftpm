@@ -15,6 +15,7 @@ struct MemberGroupDetailView: View {
     @State private var selectedFriendID: UUID?
     @State private var inviteMessage: String?
     @State private var didCopyCode = false
+    @State private var membersExpanded = true
 
     private var invitableFriends: [Person] {
         let memberIDs = Set(members.map(\.userID))
@@ -46,18 +47,23 @@ struct MemberGroupDetailView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(Theme.faint)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("メンバー (\(members.count))").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.muted)
-                ForEach(members) { member in
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(Roles.label(for: member.role)).splitFlap(11).foregroundStyle(Theme.amber)
-                        Text(member.fullName).font(.system(size: 12))
-                        if !member.airline.isEmpty {
-                            Text("(\(airlineLabel(member.airline)))").font(.system(size: 10)).foregroundStyle(Theme.faint)
+            DisclosureGroup(isExpanded: $membersExpanded) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(members) { member in
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text(Roles.label(for: member.role)).splitFlap(11).foregroundStyle(Theme.amber)
+                            Text(member.fullName).font(.system(size: 12))
+                            if !member.airline.isEmpty {
+                                Text("(\(airlineLabel(member.airline)))").font(.system(size: 10)).foregroundStyle(Theme.faint)
+                            }
                         }
                     }
                 }
+                .padding(.top, 6)
+            } label: {
+                Text("メンバー (\(members.count))").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.muted)
             }
+            .tint(Theme.muted)
 
             if !invitableFriends.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
