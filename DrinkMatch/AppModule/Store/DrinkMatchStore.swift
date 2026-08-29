@@ -565,7 +565,10 @@ final class DrinkMatchStore {
             await loadMemberGroups()
             return nil
         } catch {
-            return "グループの作成に失敗しました"
+            switch BackendErrorCode.from(error) {
+            case .memberGroupCreationLimitReached: return "グループの作成は1日3件までです。しばらくしてから再度お試しください。"
+            default: return "グループの作成に失敗しました"
+            }
         }
     }
 
