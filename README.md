@@ -8,6 +8,23 @@ the `.swiftpm` package); converted to a standard Xcode project
 access was available, specifically to add the Sign In with Apple
 capability — see "Sign in with Apple" below.
 
+## Member groups
+
+MainView has a "1対1" / "グループ" switcher (`ContactMode`, independent of
+the friends/strangers `MatchMode` within the 1-on-1 side) alongside the
+existing 1-on-1 matching. `GroupsTabView` lets a user create a persistent
+group, join one via its invite code (instant, no approval), or accept an
+invite from an existing member (`IncomingMemberGroupInvitesView` —
+requires the inviter and invitee already be friends, and needs the
+invitee's acceptance, mirroring the friend-request flow). Selecting a
+group in `GroupsTabView`'s sidebar shows `MemberGroupDetailView`: the
+roster, an invite-a-friend picker, and the group's schedule ranking — every
+day+airport at least two members share a stay for, most members-free-
+together first (`DrinkMatchStore.loadMemberGroupScheduleRanking`, backed by
+drinkmatch-backend's `get_member_group_schedule_ranking`). This is
+distinct from `GroupOffer`/group offers, a one-shot invitation tied to a
+single already-chosen day/airport.
+
 ## Status
 
 Full UI is wired to real network calls against the Supabase schema/RPCs in
