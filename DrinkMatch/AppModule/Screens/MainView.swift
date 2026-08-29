@@ -8,6 +8,7 @@ struct MainView: View {
     @State private var showingProfileInfo = false
     @State private var showingBlockedUsers = false
     @State private var showingDeleteAccount = false
+    @State private var showingSupportDeveloper = false
     @State private var contactMode: ContactMode = .oneOnOne
 
     private var profileBinding: Binding<UserProfile> {
@@ -56,6 +57,7 @@ struct MainView: View {
                     Menu {
                         Button("プロフィール") { showingProfileInfo = true }
                         Button("ブロック中のユーザー") { showingBlockedUsers = true }
+                        Button("開発者を応援する") { showingSupportDeveloper = true }
                         Button("サインアウト", role: .destructive) { Task { await store.signOut() } }
                         Button("アカウントを削除", role: .destructive) { showingDeleteAccount = true }
                     } label: {
@@ -127,6 +129,9 @@ struct MainView: View {
         }
         .sheet(isPresented: $showingDeleteAccount) {
             DeleteAccountView(store: store)
+        }
+        .sheet(isPresented: $showingSupportDeveloper) {
+            SupportDeveloperView(store: store)
         }
     }
 

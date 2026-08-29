@@ -38,6 +38,16 @@ let strangerMatchingFeatureEnabled = false
 /// that verifies purchases of this product.
 let subscriptionProductID = "com.translate5jp.drinkmatch.standard.monthly"
 
+/// One-time "support the developer" tips — no feature unlock, purely
+/// goodwill (unlike subscriptionProductID). Consumable in App Store
+/// Connect, so a user can buy more than once. Must match product IDs
+/// actually created there.
+let tipProductIDs = [
+    "com.translate5jp.drinkmatch.tip.small",
+    "com.translate5jp.drinkmatch.tip.medium",
+    "com.translate5jp.drinkmatch.tip.large",
+]
+
 /// App Store Review Guideline 3.1.2 requires a functional link to the
 /// Privacy Policy (and Terms of Use) at or near the subscription purchase
 /// button. Hosted via GitHub Pages (docs/privacy.html in this repo) since

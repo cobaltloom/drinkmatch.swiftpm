@@ -9,6 +9,12 @@ enum StoreKitManager {
         return products.first
     }
 
+    /// Ascending by price, so cheapest tip shows first.
+    static func fetchTipProducts() async throws -> [Product] {
+        let products = try await Product.products(for: tipProductIDs)
+        return products.sorted { $0.price < $1.price }
+    }
+
     enum PurchaseOutcome {
         case verified(transaction: Transaction, jws: String)
         case pending

@@ -48,6 +48,11 @@ final class DrinkMatchStore {
     /// state it's not cleared on sign-out in resetLocalState().
     var subscriptionProduct: Product?
     var isPurchasing = false
+    /// Same catalog products for every account, not cleared on sign-out,
+    /// same reasoning as subscriptionProduct.
+    var tipProducts: [Product] = []
+    var isTipping = false
+    var tipThankYouMessage: String?
 
     var notifications: [AppNotification] = []
     var myReferralCodes: [(code: String, used: Bool)] = []
@@ -433,13 +438,43 @@ final class DrinkMatchStore {
     /// Runs for the lifetime of the app (started as its own concurrent
     /// `.task` from RootView, alongside bootstrap()'s auth-state loop) —
     /// catches renewals/restores/Ask-to-Buy approvals that complete outside
-    /// a direct purchaseSubscription() call, e.g. on another device.
+    /// a direct purchaseSubscription() call, e.g. on another device. Also
+    /// finishes any tip transaction that didn't get to finish in
+    /// purchaseTip() (e.g. the app was killed mid-purchase) — tips have no
+    /// server-side verification to run, just finish() so StoreKit stops
+    /// resurfacing it.
     func observeTransactionUpdates() async {
         for await result in Transaction.updates {
             guard case .verified(let transaction) = result else { continue }
-            try? await SupabaseRepository.verifyPurchase(transactionJWS: result.jwsRepresentation)
+            if transaction.productID == subscriptionProductID {
+                try? await SupabaseRepository.verifyPurchase(transactionJWS: result.jwsRepresentation)
+                await refreshSubscriptionStatus()
+            }
             await transaction.finish()
-            await refreshSubscriptionStatus()
+        }
+    }
+
+    func loadTipProducts() async {
+        tipProducts = (try? await StoreKitManager.fetchTipProducts()) ?? []
+    }
+
+    /// Unlike purchaseSubscription, no server verification: a tip unlocks
+    /// nothing, so there's no entitlement to gate on a verified receipt —
+    /// finishing the transaction locally is all that's needed.
+    func purchaseTip(_ product: Product) async {
+        guard let userID = authUserID, !isTipping else { return }
+        isTipping = true
+        defer { isTipping = false }
+        do {
+            switch try await StoreKitManager.purchase(product, appAccountToken: userID) {
+            case .verified(let transaction, _):
+                await transaction.finish()
+                tipThankYouMessage = "ご支援ありがとうございます！"
+            case .pending, .userCancelled:
+                break
+            }
+        } catch {
+            lastErrorMessage = "購入に失敗しました。しばらくしてからもう一度お試しください。"
         }
     }
 

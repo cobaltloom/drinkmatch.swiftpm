@@ -8,6 +8,32 @@ the `.swiftpm` package); converted to a standard Xcode project
 access was available, specifically to add the Sign In with Apple
 capability — see "Sign in with Apple" below.
 
+## Support the developer (tips)
+
+The only monetization hook this app had was `subscriptionProductID`
+(`PaywallGateView`, "新しい人を探す"), which is unreachable while
+`strangerMatchingFeatureEnabled` is off — no working monetization at all in
+practice. Added `tipProductIDs` (three consumable IAPs) plus
+`SupportDeveloperView` (reachable from MainView's "..." menu → "開発者を
+応援する"): a one-time, no-strings-attached "buy the developer a drink" —
+unlike the subscription, it unlocks nothing.
+
+Because there's no entitlement to gate, `DrinkMatchStore.purchaseTip`
+skips server verification entirely — it just finishes the transaction
+locally once StoreKit confirms it, no `SupabaseRepository.verifyPurchase`
+call. `observeTransactionUpdates()` was updated to only route a
+transaction through `verifyPurchase` when its `productID` is the
+subscription; every other (i.e. tip) transaction is just finished, so an
+interrupted tip purchase doesn't linger unfinished. Consumables aren't
+restorable, so there's no restore-purchases button on this screen, unlike
+`PaywallGateView`.
+
+Requires creating three actual consumable in-app purchase products in App
+Store Connect matching `tipProductIDs` (`com.translate5jp.drinkmatch.tip.small/medium/large`)
+before this can be tested — StoreKit returns an empty product list
+otherwise, same as `subscriptionProductID` needing its own App Store
+Connect product (see "Setup" below).
+
 ## Member groups
 
 MainView has a "1対1" / "グループ" switcher (`ContactMode`, independent of
