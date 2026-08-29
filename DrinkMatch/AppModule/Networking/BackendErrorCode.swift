@@ -19,6 +19,13 @@ enum BackendErrorCode: String {
     case inviteCodeSelfUse = "invite_code_self_use"
     case alreadyFriends = "already_friends"
     case friendRequestAlreadyPending = "friend_request_already_pending"
+    case groupNameRequired = "group_name_required"
+    case notFriends = "not_friends"
+    case cannotInviteSelf = "cannot_invite_self"
+    case alreadyGroupMember = "already_group_member"
+    case groupInviteAlreadyPending = "group_invite_already_pending"
+    case groupInviteNotFound = "group_invite_not_found"
+    case groupCodeNotFound = "group_code_not_found"
     case offerNotFound = "offer_not_found"
     case offerNotPending = "offer_not_pending"
     case offerNotAccepted = "offer_not_accepted"
@@ -44,6 +51,8 @@ enum BackendErrorCode: String {
         .notAuthenticated, .verificationRequired, .subscriptionRequired, .noScheduleOverlap,
         .referralCodeCapReached, .referralCodeNotFound, .referralCodeAlreadyUsed, .referralCodeSelfUse,
         .inviteCodeNotFound, .inviteCodeSelfUse, .alreadyFriends, .friendRequestAlreadyPending,
+        .groupNameRequired, .notFriends, .cannotInviteSelf, .alreadyGroupMember,
+        .groupInviteAlreadyPending, .groupInviteNotFound, .groupCodeNotFound,
         .offerNotFound, .offerNotPending, .offerNotAccepted, .notAuthorized, .cannotOfferSelf,
         .cannotBlockSelf, .cannotReportSelf, .userBlocked, .userNotFound,
         .ageConfirmationRequired, .identityUpdateCooldown, .birthYearChangeLimit,

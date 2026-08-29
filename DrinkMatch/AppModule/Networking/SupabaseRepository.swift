@@ -212,6 +212,62 @@ enum SupabaseRepository {
         try await PostgREST.rpc("list_friends_with_overlap")
     }
 
+    // MARK: - Member groups
+
+    /// A persistent circle of people (distinct from group offers) — see
+    /// drinkmatch-backend's 20260801000025_member_groups.sql.
+    static func createMemberGroup(name: String) async throws -> MemberGroupSummaryRow {
+        let rows: [MemberGroupSummaryRow] = try await PostgREST.rpc("create_member_group", params: CreateMemberGroupParams(name: name))
+        guard let first = rows.first else {
+            throw RestClient.RequestError(status: 0, body: "create_member_group returned no rows")
+        }
+        return first
+    }
+
+    static func fetchMyMemberGroups() async throws -> [MemberGroupRow] {
+        try await PostgREST.rpc("list_my_member_groups")
+    }
+
+    static func fetchMemberGroupMembers(groupID: UUID) async throws -> [MemberGroupMemberRow] {
+        try await PostgREST.rpc("list_member_group_members", params: MemberGroupIDParams(groupId: groupID))
+    }
+
+    /// Invitee must already be a friend — creates a pending
+    /// member_group_invites row rather than an immediate membership; see
+    /// invite_to_member_group() in drinkmatch-backend.
+    static func inviteToMemberGroup(groupID: UUID, toUserID: UUID) async throws {
+        try await PostgREST.rpcVoid("invite_to_member_group", params: InviteToMemberGroupParams(groupId: groupID, toUserId: toUserID))
+    }
+
+    static func fetchIncomingMemberGroupInvites() async throws -> [MemberGroupInviteRow] {
+        try await PostgREST.rpc("list_incoming_member_group_invites")
+    }
+
+    static func respondMemberGroupInvite(inviteID: UUID, accept: Bool) async throws {
+        try await PostgREST.rpcVoid(
+            "respond_member_group_invite",
+            params: RespondMemberGroupInviteParams(inviteId: inviteID, accept: accept)
+        )
+    }
+
+    /// Joins immediately — no approval needed, unlike inviteToMemberGroup;
+    /// see join_member_group_via_code() in drinkmatch-backend.
+    static func joinMemberGroup(code: String) async throws -> MemberGroupSummaryRow {
+        let rows: [MemberGroupSummaryRow] = try await PostgREST.rpc("join_member_group_via_code", params: MemberGroupCodeParams(code: code))
+        guard let first = rows.first else {
+            throw RestClient.RequestError(status: 0, body: "join_member_group_via_code returned no rows")
+        }
+        return first
+    }
+
+    static func leaveMemberGroup(groupID: UUID) async throws {
+        try await PostgREST.rpcVoid("leave_member_group", params: MemberGroupIDParams(groupId: groupID))
+    }
+
+    static func fetchMemberGroupScheduleRanking(groupID: UUID) async throws -> [MemberGroupScheduleRankingRow] {
+        try await PostgREST.rpc("get_member_group_schedule_ranking", params: MemberGroupIDParams(groupId: groupID))
+    }
+
     // MARK: - Strangers
 
     static func searchStrangerCandidates(baseAirport: String?, role: String?) async throws -> [StrangerCandidateRow] {

@@ -53,6 +53,8 @@ final class DrinkMatchStore {
     var myReferralCodes: [(code: String, used: Bool)] = []
     var myInviteCode: String?
     var incomingFriendRequests: [FriendRequest] = []
+    var memberGroups: [MemberGroup] = []
+    var incomingMemberGroupInvites: [MemberGroupInvite] = []
     var blockedUsers: [BlockedUser] = []
 
     var lastErrorMessage: String?
@@ -134,6 +136,8 @@ final class DrinkMatchStore {
         myReferralCodes = []
         myInviteCode = nil
         incomingFriendRequests = []
+        memberGroups = []
+        incomingMemberGroupInvites = []
         blockedUsers = []
         screen = .profile
         authEmail = nil
@@ -536,6 +540,122 @@ final class DrinkMatchStore {
             }
         } catch {
             lastErrorMessage = "リクエストの処理に失敗しました。"
+        }
+    }
+
+    // MARK: - Member groups
+
+    /// Persistent groups for group-wide schedule matching — distinct from
+    /// GroupOffer (a one-shot invitation tied to a single already-chosen
+    /// day/airport).
+    func loadMemberGroups() async {
+        do {
+            let rows = try await SupabaseRepository.fetchMyMemberGroups()
+            memberGroups = rows.map(\.asMemberGroup)
+        } catch {
+            lastErrorMessage = "グループの読み込みに失敗しました。"
+        }
+    }
+
+    func createMemberGroup(name: String) async -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return "グループ名を入力してください" }
+        do {
+            _ = try await SupabaseRepository.createMemberGroup(name: trimmed)
+            await loadMemberGroups()
+            return nil
+        } catch {
+            return "グループの作成に失敗しました"
+        }
+    }
+
+    /// Fetched on demand per open detail screen rather than cached on the
+    /// store, since only one group's roster is ever shown at a time.
+    func loadMemberGroupMembers(_ groupID: UUID) async -> [MemberGroupPerson] {
+        do {
+            return try await SupabaseRepository.fetchMemberGroupMembers(groupID: groupID).map(\.asMemberGroupPerson)
+        } catch {
+            lastErrorMessage = "メンバーの読み込みに失敗しました。"
+            return []
+        }
+    }
+
+    /// Sends a pending member_group_invites row rather than adding the
+    /// friend immediately — see inviteToMemberGroup in SupabaseRepository.
+    func inviteToMemberGroup(groupID: UUID, friendUserID: UUID) async -> String? {
+        do {
+            try await SupabaseRepository.inviteToMemberGroup(groupID: groupID, toUserID: friendUserID)
+            return nil
+        } catch {
+            switch BackendErrorCode.from(error) {
+            case .notFriends: return "知り合いのみ招待できます"
+            case .alreadyGroupMember: return "すでにグループのメンバーです"
+            case .groupInviteAlreadyPending: return "すでに招待済みです"
+            default: return "招待の送信に失敗しました"
+            }
+        }
+    }
+
+    func loadIncomingMemberGroupInvites() async {
+        do {
+            let rows = try await SupabaseRepository.fetchIncomingMemberGroupInvites()
+            incomingMemberGroupInvites = rows.map(\.asMemberGroupInvite)
+        } catch {
+            lastErrorMessage = "グループ招待の読み込みに失敗しました。"
+        }
+    }
+
+    /// Accepting creates the membership row server-side; either way the
+    /// invite is resolved and removed from incomingMemberGroupInvites.
+    func respondToMemberGroupInvite(_ inviteID: UUID, accept: Bool) async {
+        do {
+            try await SupabaseRepository.respondMemberGroupInvite(inviteID: inviteID, accept: accept)
+            incomingMemberGroupInvites.removeAll { $0.id == inviteID }
+            if accept {
+                await loadMemberGroups()
+            }
+        } catch {
+            lastErrorMessage = "招待の処理に失敗しました。"
+        }
+    }
+
+    /// Joins immediately, unlike inviteToMemberGroup — knowing the group's
+    /// code needs no separate approval step.
+    func joinMemberGroup(byCode rawCode: String) async -> String? {
+        let code = rawCode.trimmingCharacters(in: .whitespaces)
+        guard !code.isEmpty else { return "招待コードを入力してください" }
+        do {
+            _ = try await SupabaseRepository.joinMemberGroup(code: code)
+            await loadMemberGroups()
+            return nil
+        } catch {
+            switch BackendErrorCode.from(error) {
+            case .groupCodeNotFound: return "招待コードが見つかりません"
+            case .alreadyGroupMember: return "すでにグループのメンバーです"
+            default: return "参加に失敗しました"
+            }
+        }
+    }
+
+    func leaveMemberGroup(_ groupID: UUID) async {
+        do {
+            try await SupabaseRepository.leaveMemberGroup(groupID: groupID)
+            memberGroups.removeAll { $0.id == groupID }
+        } catch {
+            lastErrorMessage = "グループの脱退に失敗しました。"
+        }
+    }
+
+    /// Every day+airport at least two members share a stay for, most
+    /// members-free-together first — see get_member_group_schedule_ranking
+    /// in drinkmatch-backend. Fetched on demand per open detail screen, same
+    /// reasoning as loadMemberGroupMembers.
+    func loadMemberGroupScheduleRanking(_ groupID: UUID) async -> [MemberGroupScheduleMatch] {
+        do {
+            return try await SupabaseRepository.fetchMemberGroupScheduleRanking(groupID: groupID).compactMap(\.asMemberGroupScheduleMatch)
+        } catch {
+            lastErrorMessage = "予定の集計に失敗しました。"
+            return []
         }
     }
 

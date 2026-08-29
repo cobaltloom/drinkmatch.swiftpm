@@ -8,6 +8,7 @@ struct MainView: View {
     @State private var showingProfileInfo = false
     @State private var showingBlockedUsers = false
     @State private var showingDeleteAccount = false
+    @State private var contactMode: ContactMode = .oneOnOne
 
     private var profileBinding: Binding<UserProfile> {
         Binding(
@@ -69,28 +70,38 @@ struct MainView: View {
             }
             .padding(.bottom, 14)
 
-            if strangerMatchingFeatureEnabled {
-                StrangerDisplayNameEditorView(profile: profileBinding)
-                    .padding(.bottom, 14)
+            HStack(spacing: 6) {
+                contactModeButton(.oneOnOne, title: "1対1")
+                contactModeButton(.groups, title: "グループ")
             }
+            .padding(.bottom, 14)
 
-            if strangerMatchingFeatureEnabled && store.isVerified {
-                ReferralCodeGeneratorView(codes: store.myReferralCodes, onGenerate: { Task { await store.generateReferralCode() } })
-                    .padding(.bottom, 14)
-            }
-
-            if strangerMatchingFeatureEnabled {
-                HStack(spacing: 6) {
-                    modeButton(.friends, title: "知り合いから探す")
-                    modeButton(.strangers, title: "新しい人を探す")
-                }
-                .padding(.bottom, 14)
-            }
-
-            if strangerMatchingFeatureEnabled && store.mode == .strangers {
-                StrangersTabView(store: store)
+            if contactMode == .groups {
+                GroupsTabView(store: store)
             } else {
-                FriendsTabView(store: store)
+                if strangerMatchingFeatureEnabled {
+                    StrangerDisplayNameEditorView(profile: profileBinding)
+                        .padding(.bottom, 14)
+                }
+
+                if strangerMatchingFeatureEnabled && store.isVerified {
+                    ReferralCodeGeneratorView(codes: store.myReferralCodes, onGenerate: { Task { await store.generateReferralCode() } })
+                        .padding(.bottom, 14)
+                }
+
+                if strangerMatchingFeatureEnabled {
+                    HStack(spacing: 6) {
+                        modeButton(.friends, title: "知り合いから探す")
+                        modeButton(.strangers, title: "新しい人を探す")
+                    }
+                    .padding(.bottom, 14)
+                }
+
+                if strangerMatchingFeatureEnabled && store.mode == .strangers {
+                    StrangersTabView(store: store)
+                } else {
+                    FriendsTabView(store: store)
+                }
             }
         }
         .task {
@@ -106,6 +117,17 @@ struct MainView: View {
         .sheet(isPresented: $showingDeleteAccount) {
             DeleteAccountView(store: store)
         }
+    }
+
+    private func contactModeButton(_ target: ContactMode, title: String) -> some View {
+        Button(title) { contactMode = target }
+            .font(.system(size: 13))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .foregroundStyle(contactMode == target ? Theme.amber : Theme.muted)
+            .background(contactMode == target ? Theme.amberBackground : Color.clear)
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(contactMode == target ? Theme.amber : Theme.fieldBorder))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 
     private func modeButton(_ target: MatchMode, title: String) -> some View {

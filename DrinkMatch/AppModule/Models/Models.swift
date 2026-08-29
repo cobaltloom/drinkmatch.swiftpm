@@ -183,6 +183,51 @@ struct FriendRequest: Identifiable, Hashable {
     var base: String
 }
 
+/// A persistent circle of people for group-wide schedule matching — distinct
+/// from GroupOffer, which is a one-shot invitation tied to a single
+/// already-chosen day/airport. See MemberGroupDetailView.
+struct MemberGroup: Identifiable, Hashable {
+    var id: UUID
+    var name: String
+    var inviteCode: String
+    var memberCount: Int
+    var createdByUserID: UUID
+}
+
+/// A fellow group member, shown with full identity like FriendRequest —
+/// group members are assumed to already know each other in person.
+struct MemberGroupPerson: Identifiable, Hashable {
+    var userID: UUID
+    var fullName: String
+    var role: String
+    var airline: String
+    var base: String
+    var id: UUID { userID }
+}
+
+/// An incoming request to join a group, sent by an existing member who
+/// added this user directly (as opposed to this user joining via the
+/// group's invite code, which needs no approval).
+struct MemberGroupInvite: Identifiable, Hashable {
+    var id: UUID
+    var groupID: UUID
+    var groupName: String
+    var fromUserID: UUID
+    var fromFullName: String
+    var fromRole: String
+    var fromAirline: String
+    var fromBase: String
+}
+
+/// One ranked row in a group's schedule ranking: a day+airport combination
+/// and which members are free then, most-overlapping first.
+struct MemberGroupScheduleMatch: Identifiable, Hashable {
+    var day: Int
+    var location: String
+    var memberNames: [String]
+    var id: String { "\(day)-\(location)" }
+}
+
 /// The signed-in user's profile, including how they want to appear to
 /// strangers in the new-match flow.
 struct UserProfile {
@@ -250,6 +295,14 @@ enum AppScreen {
 enum MatchMode: String, CaseIterable, Hashable {
     case friends
     case strangers
+}
+
+/// 1-on-1 matching vs. persistent member groups on the main screen —
+/// independent of MatchMode (friends/strangers), which only applies within
+/// the 1-on-1 side.
+enum ContactMode: String, CaseIterable, Hashable {
+    case oneOnOne
+    case groups
 }
 
 /// 1-on-1 vs. group-offer sub-tab within the strangers tab (see

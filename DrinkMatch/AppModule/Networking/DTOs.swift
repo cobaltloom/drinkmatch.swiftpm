@@ -70,6 +70,39 @@ struct EmailParams: Encodable {
     enum CodingKeys: String, CodingKey { case email = "p_email" }
 }
 
+struct CreateMemberGroupParams: Encodable {
+    var name: String
+    enum CodingKeys: String, CodingKey { case name = "p_name" }
+}
+
+struct MemberGroupIDParams: Encodable {
+    var groupId: UUID
+    enum CodingKeys: String, CodingKey { case groupId = "p_group_id" }
+}
+
+struct InviteToMemberGroupParams: Encodable {
+    var groupId: UUID
+    var toUserId: UUID
+    enum CodingKeys: String, CodingKey {
+        case groupId = "p_group_id"
+        case toUserId = "p_to_user_id"
+    }
+}
+
+struct RespondMemberGroupInviteParams: Encodable {
+    var inviteId: UUID
+    var accept: Bool
+    enum CodingKeys: String, CodingKey {
+        case inviteId = "p_invite_id"
+        case accept = "p_accept"
+    }
+}
+
+struct MemberGroupCodeParams: Encodable {
+    var code: String
+    enum CodingKeys: String, CodingKey { case code = "p_code" }
+}
+
 struct CodeParams: Encodable {
     var code: String
     enum CodingKeys: String, CodingKey { case code = "p_code" }
@@ -314,6 +347,108 @@ struct FriendRequestRow: Decodable, Identifiable {
 
     var asFriendRequest: FriendRequest {
         FriendRequest(id: requestId, fromUserID: fromUserId, fullName: fullName, role: role, airline: airline ?? "", base: baseAirport)
+    }
+}
+
+struct MemberGroupRow: Decodable, Identifiable {
+    var id: UUID
+    var name: String
+    var inviteCode: String
+    var memberCount: Int
+    var createdByUserId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case inviteCode = "invite_code"
+        case memberCount = "member_count"
+        case createdByUserId = "created_by_user_id"
+    }
+
+    var asMemberGroup: MemberGroup {
+        MemberGroup(id: id, name: name, inviteCode: inviteCode, memberCount: memberCount, createdByUserID: createdByUserId)
+    }
+}
+
+struct MemberGroupMemberRow: Decodable, Identifiable {
+    var userId: UUID
+    var fullName: String
+    var role: String
+    var airline: String?
+    var baseAirport: String
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case fullName = "full_name"
+        case role, airline
+        case baseAirport = "base_airport"
+    }
+
+    var id: UUID { userId }
+
+    var asMemberGroupPerson: MemberGroupPerson {
+        MemberGroupPerson(userID: userId, fullName: fullName, role: role, airline: airline ?? "", base: baseAirport)
+    }
+}
+
+struct MemberGroupInviteRow: Decodable, Identifiable {
+    var inviteId: UUID
+    var groupId: UUID
+    var groupName: String
+    var fromUserId: UUID
+    var fromFullName: String
+    var fromRole: String
+    var fromAirline: String?
+    var fromBaseAirport: String
+
+    enum CodingKeys: String, CodingKey {
+        case inviteId = "invite_id"
+        case groupId = "group_id"
+        case groupName = "group_name"
+        case fromUserId = "from_user_id"
+        case fromFullName = "from_full_name"
+        case fromRole = "from_role"
+        case fromAirline = "from_airline"
+        case fromBaseAirport = "from_base_airport"
+    }
+
+    var id: UUID { inviteId }
+
+    var asMemberGroupInvite: MemberGroupInvite {
+        MemberGroupInvite(
+            id: inviteId, groupID: groupId, groupName: groupName, fromUserID: fromUserId,
+            fromFullName: fromFullName, fromRole: fromRole, fromAirline: fromAirline ?? "", fromBase: fromBaseAirport
+        )
+    }
+}
+
+/// Shared shape of create_member_group / join_member_group_via_code's
+/// results — the latter just never populates inviteCode (the joiner
+/// doesn't need it back).
+struct MemberGroupSummaryRow: Decodable {
+    var id: UUID
+    var name: String
+    var inviteCode: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case inviteCode = "invite_code"
+    }
+}
+
+struct MemberGroupScheduleRankingRow: Decodable {
+    var day: String
+    var airportCode: String
+    var memberFullNames: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case day
+        case airportCode = "airport_code"
+        case memberFullNames = "member_full_names"
+    }
+
+    var asMemberGroupScheduleMatch: MemberGroupScheduleMatch? {
+        guard let dayOfMonth = dayOfMonth(fromPostgresDate: day) else { return nil }
+        return MemberGroupScheduleMatch(day: dayOfMonth, location: airportCode, memberNames: memberFullNames)
     }
 }
 
