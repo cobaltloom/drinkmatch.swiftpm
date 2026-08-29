@@ -36,9 +36,9 @@ struct MainView: View {
         BoardScreenContainer {
             HStack(alignment: .firstTextBaseline) {
                 Text("CrewBoard").splitFlap(20, weight: .bold).foregroundStyle(Theme.amber)
+                NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
                 Spacer()
                 HStack(spacing: 6) {
-                    NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
                     Button {
                         store.screen = .schedule
                     } label: {
