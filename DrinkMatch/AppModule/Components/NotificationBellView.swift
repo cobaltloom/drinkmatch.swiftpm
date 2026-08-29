@@ -28,6 +28,7 @@ struct NotificationBellView: View {
                         .offset(x: 10, y: -8)
                 }
             }
+            .fixedSize()
         }
         .buttonStyle(BoardChromeButtonStyle())
         .popover(isPresented: $isOpen) {
