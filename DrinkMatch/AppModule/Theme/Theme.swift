@@ -95,6 +95,7 @@ struct BoardChromeButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12))
+            .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .foregroundStyle(Theme.text)
