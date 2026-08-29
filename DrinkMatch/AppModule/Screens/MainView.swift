@@ -41,8 +41,10 @@ struct MainView: View {
                     NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
                     Button("スケジュール編集") { store.screen = .schedule }
                         .buttonStyle(BoardChromeButtonStyle())
-                    Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
-                        .buttonStyle(BoardChromeButtonStyle())
+                    if strangerMatchingFeatureEnabled {
+                        Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
+                            .buttonStyle(BoardChromeButtonStyle())
+                    }
                     Menu {
                         Button("プロフィール") { showingProfileInfo = true }
                         Button("ブロック中のユーザー") { showingBlockedUsers = true }
