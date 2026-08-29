@@ -39,8 +39,14 @@ struct MainView: View {
                 Spacer()
                 HStack(spacing: 6) {
                     NotificationBellView(notifications: store.notifications, onOpen: { Task { await store.markAllNotificationsRead() } })
-                    Button("スケジュール編集") { store.screen = .schedule }
-                        .buttonStyle(BoardChromeButtonStyle())
+                    Button {
+                        store.screen = .schedule
+                    } label: {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(BoardChromeButtonStyle())
+                    .accessibilityLabel("スケジュール編集")
                     if strangerMatchingFeatureEnabled {
                         Button("マッチ (\(store.matches.count + store.groups.count))") { store.screen = .matches }
                             .buttonStyle(BoardChromeButtonStyle())
