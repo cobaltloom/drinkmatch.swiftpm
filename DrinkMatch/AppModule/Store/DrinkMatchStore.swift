@@ -75,34 +75,6 @@ final class DrinkMatchStore {
         isBootstrapping = false
     }
 
-    /// Returns a status/error message to show inline, or nil on a
-    /// session-issuing success.
-    func signUpWithEmail(email: String, password: String) async -> String? {
-        do {
-            guard let userID = try await SupabaseRepository.signUpWithEmail(email: email, password: password) else {
-                return "確認メールを送信しました。メール内のリンクを開いてからサインインしてください。"
-            }
-            authUserID = userID
-            authEmail = await AuthManager.shared.currentUserEmail
-            await loadAfterSignIn(userID: userID)
-            return nil
-        } catch {
-            return "登録に失敗しました: \(error)"
-        }
-    }
-
-    func signInWithEmail(email: String, password: String) async -> String? {
-        do {
-            let userID = try await SupabaseRepository.signInWithEmail(email: email, password: password)
-            authUserID = userID
-            authEmail = await AuthManager.shared.currentUserEmail
-            await loadAfterSignIn(userID: userID)
-            return nil
-        } catch {
-            return "サインインに失敗しました: \(error)"
-        }
-    }
-
     /// Returns a status/error message to show inline, or nil on success.
     /// `idToken`/`rawNonce` come from SignInView's SignInWithAppleButton,
     /// which owns presenting Apple's native sheet. Works for both

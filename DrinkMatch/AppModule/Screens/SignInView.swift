@@ -1,16 +1,14 @@
 import AuthenticationServices
 import SwiftUI
 
-/// The very first screen for a signed-out user: email/password (Supabase
-/// Auth) or Sign in with Apple, both talking to the same GoTrue backend
-/// (see AuthManager). Apple's Guideline 4.8 doesn't actually require Sign
-/// in with Apple here (no other third-party login is offered), but it's a
-/// convenient, password-free option for users who prefer it.
+/// The very first screen for a signed-out user: Sign in with Apple only
+/// (talking to Supabase Auth/GoTrue's native id_token flow — see
+/// AuthManager). Every user of this iOS-only, App Store-distributed app
+/// already has an Apple ID, so this is the sole sign-in method — no
+/// password to forget, reset, or store.
 struct SignInView: View {
     var store: DrinkMatchStore
 
-    @State private var email = ""
-    @State private var password = ""
     @State private var message: String?
     @State private var isSubmitting = false
     @State private var currentAppleNonce = ""
@@ -34,38 +32,6 @@ struct SignInView: View {
                     .signInWithAppleButtonStyle(.white)
                     .frame(height: 44)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .disabled(isSubmitting)
-
-                    HStack {
-                        Rectangle().fill(Theme.fieldBorder).frame(height: 1)
-                        Text("または").font(.system(size: 11)).foregroundStyle(Theme.faint)
-                        Rectangle().fill(Theme.fieldBorder).frame(height: 1)
-                    }
-                    .padding(.vertical, 4)
-
-                    TextField("メールアドレス", text: $email)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .font(.system(size: 14))
-                        .padding(10)
-                        .background(Theme.field)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-
-                    SecureField("パスワード（8文字以上）", text: $password)
-                        .font(.system(size: 14))
-                        .padding(10)
-                        .background(Theme.field)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.fieldBorder))
-
-                    HStack(spacing: 12) {
-                        Button("新規登録") { Task { await submit(store.signUpWithEmail) } }
-                            .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
-                        Button("サインイン") { Task { await submit(store.signInWithEmail) } }
-                            .buttonStyle(BoardButtonStyle(isDisabled: isSubmitting))
-                    }
                     .disabled(isSubmitting)
 
                     if let message {
@@ -96,12 +62,6 @@ struct SignInView: View {
             }
             .frame(maxWidth: .infinity)
         }
-    }
-
-    private func submit(_ action: (String, String) async -> String?) async {
-        isSubmitting = true
-        defer { isSubmitting = false }
-        message = await action(email, password)
     }
 
     private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) async {
