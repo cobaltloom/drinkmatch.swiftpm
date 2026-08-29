@@ -14,12 +14,11 @@ struct SignInView: View {
     @State private var currentAppleNonce = ""
 
     var body: some View {
-        BoardScreenContainer {
+        BoardScreenContainer(centerVertically: true) {
             VStack(spacing: 28) {
                 VStack(spacing: 4) {
                     Text("CrewBoard").splitFlap(32, weight: .bold).foregroundStyle(Theme.amber)
                 }
-                .padding(.top, 80)
 
                 VStack(spacing: 8) {
                     SignInWithAppleButton(.signIn) { request in
