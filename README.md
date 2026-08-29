@@ -1,7 +1,7 @@
 # drinkmatch (CrewBoard)
 
 Airline-crew drink-matching app. A SwiftUI app backed by the
-[drinkmatch-backend](https://github.com/translate5jp/drinkmatch-backend)
+[drinkmatch-backend](https://github.com/cobaltloom/drinkmatch-backend)
 Supabase project. Originally a Swift Playgrounds App project (repo root as
 the `.swiftpm` package); converted to a standard Xcode project
 (`DrinkMatch.xcodeproj`, app code under `DrinkMatch/AppModule`) once Mac
