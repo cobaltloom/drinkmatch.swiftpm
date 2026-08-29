@@ -1,11 +1,11 @@
+import AuthenticationServices
 import SwiftUI
 
-/// The very first screen for a signed-out user. Email/password (Supabase
-/// Auth) rather than Sign in with Apple: this app doesn't offer any other
-/// third-party login, so Apple's Guideline 4.8 requirement (offer Sign in
-/// with Apple whenever another third-party login is present) doesn't apply,
-/// and email/password needs no App Store entitlement or paid Developer
-/// Program capability to work.
+/// The very first screen for a signed-out user: email/password (Supabase
+/// Auth) or Sign in with Apple, both talking to the same GoTrue backend
+/// (see AuthManager). Apple's Guideline 4.8 doesn't actually require Sign
+/// in with Apple here (no other third-party login is offered), but it's a
+/// convenient, password-free option for users who prefer it.
 struct SignInView: View {
     var store: DrinkMatchStore
 
@@ -13,6 +13,7 @@ struct SignInView: View {
     @State private var password = ""
     @State private var message: String?
     @State private var isSubmitting = false
+    @State private var currentAppleNonce = ""
 
     var body: some View {
         BoardScreenContainer {
@@ -23,6 +24,25 @@ struct SignInView: View {
                 .padding(.top, 80)
 
                 VStack(spacing: 8) {
+                    SignInWithAppleButton(.signIn) { request in
+                        currentAppleNonce = AppleNonceGenerator.random()
+                        request.requestedScopes = [.fullName, .email]
+                        request.nonce = AppleNonceGenerator.sha256(currentAppleNonce)
+                    } onCompletion: { result in
+                        Task { await handleAppleSignIn(result) }
+                    }
+                    .signInWithAppleButtonStyle(.white)
+                    .frame(height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .disabled(isSubmitting)
+
+                    HStack {
+                        Rectangle().fill(Theme.fieldBorder).frame(height: 1)
+                        Text("または").font(.system(size: 11)).foregroundStyle(Theme.faint)
+                        Rectangle().fill(Theme.fieldBorder).frame(height: 1)
+                    }
+                    .padding(.vertical, 4)
+
                     TextField("メールアドレス", text: $email)
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
@@ -82,5 +102,24 @@ struct SignInView: View {
         isSubmitting = true
         defer { isSubmitting = false }
         message = await action(email, password)
+    }
+
+    private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken,
+                  let idToken = String(data: tokenData, encoding: .utf8) else {
+                message = "サインインに失敗しました。"
+                return
+            }
+            message = await store.signInWithApple(idToken: idToken, rawNonce: currentAppleNonce)
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code != .canceled {
+                message = "サインインに失敗しました: \(error)"
+            }
+        }
     }
 }

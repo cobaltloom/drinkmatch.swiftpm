@@ -59,6 +59,18 @@ actor AuthManager {
         return newSession.userID
     }
 
+    /// `nonce` is the raw (unhashed) nonce SignInView's SignInWithAppleButton
+    /// generated (via AppleNonceGenerator) — GoTrue hashes it itself and
+    /// compares against the hash embedded in `idToken`'s claims, rejecting
+    /// the request if they don't match.
+    func signInWithApple(idToken: String, nonce: String) async throws -> UUID {
+        let response = try await Self.exchange(grantType: "id_token", body: IDTokenBody(idToken: idToken, provider: "apple", nonce: nonce))
+        let newSession = Self.session(from: response)
+        session = newSession
+        KeychainStore.save(newSession)
+        return newSession.userID
+    }
+
     func signOut() async throws {
         if let token = session?.accessToken {
             try? await Self.logout(accessToken: token)
@@ -124,6 +136,16 @@ actor AuthManager {
     private struct RefreshTokenBody: Encodable {
         var refreshToken: String
         enum CodingKeys: String, CodingKey { case refreshToken = "refresh_token" }
+    }
+
+    private struct IDTokenBody: Encodable {
+        var idToken: String
+        var provider: String
+        var nonce: String
+        enum CodingKeys: String, CodingKey {
+            case idToken = "id_token"
+            case provider, nonce
+        }
     }
 
     /// `/auth/v1/signup`'s response shape when email confirmation is

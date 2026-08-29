@@ -103,6 +103,25 @@ final class DrinkMatchStore {
         }
     }
 
+    /// Returns a status/error message to show inline, or nil on success.
+    /// `idToken`/`rawNonce` come from SignInView's SignInWithAppleButton,
+    /// which owns presenting Apple's native sheet. Works for both
+    /// first-time and returning Apple accounts — GoTrue creates the
+    /// auth.users row on first use, same as email sign-up, and
+    /// loadAfterSignIn already routes a user with no public.users row yet
+    /// to onboarding.
+    func signInWithApple(idToken: String, rawNonce: String) async -> String? {
+        do {
+            let userID = try await SupabaseRepository.signInWithApple(idToken: idToken, nonce: rawNonce)
+            authUserID = userID
+            authEmail = await AuthManager.shared.currentUserEmail
+            await loadAfterSignIn(userID: userID)
+            return nil
+        } catch {
+            return "サインインに失敗しました: \(error)"
+        }
+    }
+
     func signOut() async {
         try? await SupabaseRepository.signOut()
         authUserID = nil

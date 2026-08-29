@@ -1,9 +1,12 @@
 # drinkmatch (CrewBoard)
 
-Airline-crew drink-matching app. A SwiftUI Swift Playgrounds App project
-(this repo root is the `.swiftpm` package) backed by the
+Airline-crew drink-matching app. A SwiftUI app backed by the
 [drinkmatch-backend](https://github.com/translate5jp/drinkmatch-backend)
-Supabase project.
+Supabase project. Originally a Swift Playgrounds App project (repo root as
+the `.swiftpm` package); converted to a standard Xcode project
+(`DrinkMatch.xcodeproj`, app code under `DrinkMatch/AppModule`) once Mac
+access was available, specifically to add the Sign In with Apple
+capability — see "Sign in with Apple" below.
 
 ## Status
 
@@ -16,20 +19,24 @@ referral-issuer/redeemer deletion paths — see "Behavior changes from the
 prototype" below) all confirmed working against the real
 `drinkmatch-backend` project.
 
-**Sign-in is plain email/password (Supabase Auth), not Sign in with
-Apple.** Sign in with Apple was tried first, but Swift Playgrounds has no
-way to add the Sign in with Apple capability at all — confirmed against
+**Sign-in supports both plain email/password and Sign in with Apple**
+(Supabase Auth's `id_token` grant — see `AuthManager.signInWithApple` and
+`AppleNonceGenerator`). Sign in with Apple was dropped for a long stretch
+of this project's history: Swift Playgrounds' `.iOSApplication` project
+format has no way to add the capability at all — confirmed against
 Apple's own list of supported App Playground capabilities
 (`developer.apple.com/documentation/swift-playgrounds/project-capabilities`),
-which has no Sign in with Apple entry; on-device authorization fails with
-`ASAuthorizationError` `Code=1000`. Working around that meant building
-headlessly in CI on a macOS runner with a hand-injected entitlement, which
-in turn ran into its own Apple Developer certificate-quota problems. Since
-this app doesn't offer any other third-party login, Apple's Guideline 4.8
-(offer Sign in with Apple whenever another third-party login is present)
-doesn't apply here anyway, so plain email/password avoided all of that:
-no entitlement, no paid Developer Program capability, no CI, buildable and
-testable entirely inside Swift Playgrounds on-device.
+which has no Sign in with Apple entry, and later reconfirmed directly in
+Xcode's Signing & Capabilities editor, which never offered it for that
+project format regardless of team/signing state. Working around that with
+CI on a macOS runner (a hand-injected entitlement, building headlessly)
+ran into its own Apple Developer certificate-quota problems and was
+abandoned too. The capability only became addable once this repo
+converted to a standard Xcode project (see "Status" above) — at that
+point Xcode's "+ Capability" search actually found it. Since this app
+doesn't offer any other third-party login, Apple's Guideline 4.8 (offer
+Sign in with Apple whenever another third-party login is present) never
+required this; it's offered purely as a password-free convenience.
 
 **This does not use the official `supabase-swift` SDK.** It was tried
 first and turned out to be impossible to build in Swift Playgrounds: the
