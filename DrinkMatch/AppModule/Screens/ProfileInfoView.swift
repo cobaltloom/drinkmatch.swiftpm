@@ -80,7 +80,7 @@ struct ProfileInfoView: View {
         VStack(alignment: .leading, spacing: 8) {
             if isEditingName {
                 Text("お名前").font(.system(size: 11)).foregroundStyle(Theme.muted)
-                TextField("例: YOSUKE TANAKA", text: $editFullName)
+                TextField("例: 田中 洋輔", text: $editFullName)
                     .font(.system(size: 14))
                     .padding(10)
                     .background(Theme.field)

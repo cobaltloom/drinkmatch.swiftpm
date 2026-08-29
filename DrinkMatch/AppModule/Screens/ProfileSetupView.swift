@@ -48,7 +48,7 @@ struct ProfileSetupView: View {
                 AirportAutocompleteField(code: $base)
 
                 Text("お名前").font(.system(size: 12)).foregroundStyle(Theme.muted).padding(.top, 16).padding(.bottom, 6)
-                TextField("例: YOSUKE TANAKA", text: $fullName)
+                TextField("例: 田中 洋輔", text: $fullName)
                     .font(.system(size: 14))
                     .padding(10)
                     .background(Theme.field)
