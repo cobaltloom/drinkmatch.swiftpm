@@ -46,6 +46,7 @@ struct MainView: View {
                             Image(systemName: "calendar")
                             Text("スケジュール編集")
                         }
+                        .fixedSize()
                     }
                     .buttonStyle(BoardChromeButtonStyle())
                     if strangerMatchingFeatureEnabled {
