@@ -136,26 +136,36 @@ struct MainView: View {
     }
 
     private func contactModeButton(_ target: ContactMode, title: String) -> some View {
-        Button(title) { contactMode = target }
-            .font(.system(size: 13))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .foregroundStyle(contactMode == target ? Theme.amber : Theme.muted)
-            .background(contactMode == target ? Theme.amberBackground : Color.clear)
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(contactMode == target ? Theme.amber : Theme.fieldBorder))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            .contentShape(Rectangle())
+        Button {
+            contactMode = target
+        } label: {
+            Text(title)
+                .font(.system(size: 13))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .foregroundStyle(contactMode == target ? Theme.amber : Theme.muted)
+                .background(contactMode == target ? Theme.amberBackground : Color.clear)
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(contactMode == target ? Theme.amber : Theme.fieldBorder))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func modeButton(_ target: MatchMode, title: String) -> some View {
-        Button(title) { store.mode = target }
-            .font(.system(size: 13))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .foregroundStyle(store.mode == target ? Theme.amber : Theme.muted)
-            .background(store.mode == target ? Theme.amberBackground : Color.clear)
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(store.mode == target ? Theme.amber : Theme.fieldBorder))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            .contentShape(Rectangle())
+        Button {
+            store.mode = target
+        } label: {
+            Text(title)
+                .font(.system(size: 13))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .foregroundStyle(store.mode == target ? Theme.amber : Theme.muted)
+                .background(store.mode == target ? Theme.amberBackground : Color.clear)
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(store.mode == target ? Theme.amber : Theme.fieldBorder))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
