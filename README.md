@@ -34,6 +34,16 @@ before this can be tested — StoreKit returns an empty product list
 otherwise, same as `subscriptionProductID` needing its own App Store
 Connect product (see "Setup" below).
 
+`SupportDeveloperView` also has a Rakuten Affiliate link (`rakutenAffiliateURL`)
+as a second, no-obligation way to support the developer: not an in-app
+purchase at all (opens Safari), so App Store Review Guideline 3.1.3(a)'s
+exemption for physical goods/services bought outside the app applies —
+same reasoning Amazon's or Rakuten's own apps rely on for their own
+purchase flows. Any purchase made after clicking through earns a small
+commission at no extra cost to the buyer; no Apple cut either, since it
+never touches IAP. The tracking ID embedded in the URL is meant to be
+public — it's what makes the link work — not a secret to protect.
+
 ## Member groups
 
 MainView has a "1対1" / "グループ" switcher (`ContactMode`, independent of

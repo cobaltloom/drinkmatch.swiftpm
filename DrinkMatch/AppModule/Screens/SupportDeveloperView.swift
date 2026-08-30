@@ -54,6 +54,17 @@ struct SupportDeveloperView: View {
             if let storeMessage = store.lastErrorMessage {
                 Text(storeMessage).font(.system(size: 12)).foregroundStyle(Theme.red).padding(.top, 12)
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("楽天市場で買い物する").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.muted)
+                Text("いつも通りお買い物いただくだけで、購入価格の上乗せなしに開発者へ少額の紹介料が入ります。")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .fixedSize(horizontal: false, vertical: true)
+                Link("楽天市場を開く", destination: rakutenAffiliateURL)
+                    .buttonStyle(BoardOutlineButtonStyle())
+            }
+            .padding(.top, 20)
         }
         .task { await store.loadTipProducts() }
     }

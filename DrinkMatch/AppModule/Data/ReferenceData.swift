@@ -48,6 +48,15 @@ let tipProductIDs = [
     "com.translate5jp.drinkmatch.tip.large",
 ]
 
+/// Another no-obligation way to support the developer, alongside the tip
+/// IAPs above: a Rakuten Affiliate link. Not an in-app purchase at all —
+/// App Store Review Guideline 3.1.3(a) exempts physical goods/services
+/// bought outside the app, so this just opens Safari; any purchase made
+/// there earns the developer a small commission at no extra cost to the
+/// buyer. The tracking ID embedded in this URL is meant to be public
+/// (it's what makes the link work when anyone clicks it), not a secret.
+let rakutenAffiliateURL = URL(string: "https://hb.afl.rakuten.co.jp/hgc/56f9b6b8.e2cfb5b4.56f9b6b9.000c4d95/?pc=https%3A%2F%2Fwww.rakuten.co.jp%2F&link_type=text&ut=eyJwYWdlIjoidXJsIiwidHlwZSI6InRleHQiLCJjb2wiOjF9")!
+
 /// App Store Review Guideline 3.1.2 requires a functional link to the
 /// Privacy Policy (and Terms of Use) at or near the subscription purchase
 /// button. Hosted via GitHub Pages (docs/privacy.html in this repo) since
