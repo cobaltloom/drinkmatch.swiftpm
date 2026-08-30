@@ -144,6 +144,7 @@ struct MainView: View {
             .background(contactMode == target ? Theme.amberBackground : Color.clear)
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(contactMode == target ? Theme.amber : Theme.fieldBorder))
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .contentShape(Rectangle())
     }
 
     private func modeButton(_ target: MatchMode, title: String) -> some View {
@@ -155,5 +156,6 @@ struct MainView: View {
             .background(store.mode == target ? Theme.amberBackground : Color.clear)
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(store.mode == target ? Theme.amber : Theme.fieldBorder))
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .contentShape(Rectangle())
     }
 }
