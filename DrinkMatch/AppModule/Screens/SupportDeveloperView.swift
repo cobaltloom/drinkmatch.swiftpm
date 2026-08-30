@@ -42,7 +42,7 @@ struct SupportDeveloperView: View {
                             HStack {
                                 Text(product.displayName)
                                 Spacer()
-                                Text(product.displayPrice).foregroundStyle(Theme.amber)
+                                Text(product.displayPrice)
                             }
                         }
                         .buttonStyle(BoardButtonStyle(isDisabled: store.isTipping))
