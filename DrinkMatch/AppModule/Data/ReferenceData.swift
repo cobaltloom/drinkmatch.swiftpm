@@ -144,6 +144,7 @@ enum StayAirports {
         Airport(code: "HIJ", name: "広島"),
         Airport(code: "IWK", name: "岩国"),
         Airport(code: "YGJ", name: "米子"),
+        Airport(code: "IZO", name: "出雲"),
         Airport(code: "TTJ", name: "石見"),
         Airport(code: "UBJ", name: "山口宇部"),
         // 四国
