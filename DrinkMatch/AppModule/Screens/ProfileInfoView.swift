@@ -3,8 +3,12 @@ import SwiftUI
 /// Account/profile summary, reachable from MainView's overflow menu —
 /// shows which email address the user is signed in with, and lets them
 /// change their name (unrestricted — see DrinkMatchStore.updateFullName)
-/// and role/airline/base (rate-limited server-side, see
-/// DrinkMatchStore.updateIdentity).
+/// and role/base (rate-limited server-side, see
+/// DrinkMatchStore.updateIdentity). The airline field is neither shown nor
+/// editable here — surfacing it was dropped entirely to avoid inviting
+/// users to have a company name on file at all; it can still be set via
+/// AirlineRequiredGateView if the (currently disabled) stranger-matching
+/// feature is ever turned back on.
 struct ProfileInfoView: View {
     var store: DrinkMatchStore
 
@@ -221,9 +225,6 @@ struct ProfileInfoView: View {
                     }
                 }
 
-                Text("会社").font(.system(size: 11)).foregroundStyle(Theme.muted).padding(.top, 8)
-                AirlineAutocompleteField(code: $editAirline)
-
                 Text("拠点空港").font(.system(size: 11)).foregroundStyle(Theme.muted).padding(.top, 8)
                 AirportAutocompleteField(code: $editBase)
 
@@ -241,12 +242,11 @@ struct ProfileInfoView: View {
                     Text(editMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
                 }
 
-                Text("職種・会社・拠点空港は30日に1回まで変更できます。")
+                Text("職種・拠点空港は30日に1回まで変更できます。")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.faint)
             } else {
                 infoRow(label: "職種", value: Roles.label(for: store.profile?.role ?? ""))
-                infoRow(label: "会社", value: (store.profile?.airline).flatMap { $0.isEmpty ? nil : airlineLabel($0) } ?? "未登録")
                 infoRow(label: "拠点空港", value: (store.profile?.base).flatMap { $0.isEmpty ? nil : airportLabel($0) } ?? "未登録")
 
                 if canEditIdentity {
