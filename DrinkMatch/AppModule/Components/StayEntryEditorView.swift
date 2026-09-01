@@ -11,6 +11,10 @@ struct StayEntryEditorView: View {
     /// to label the row correctly, since `entry.day` is a bare day-of-month
     /// int with no month of its own (see ScheduleSetupView).
     var month: Int
+    /// The user's base airport, auto-filled into `entry.location` when
+    /// "一日中OK" is turned on and the stay location hasn't been set yet —
+    /// an all-day-free entry is typically a day at home base.
+    var baseAirport: String
     var onRemove: () -> Void
 
     @State private var showingHideOptions = false
@@ -121,6 +125,9 @@ struct StayEntryEditorView: View {
         } else {
             savedTime = entry.from
             entry.from = "00:00"
+            if entry.location.trimmingCharacters(in: .whitespaces).isEmpty {
+                entry.location = baseAirport
+            }
         }
     }
 

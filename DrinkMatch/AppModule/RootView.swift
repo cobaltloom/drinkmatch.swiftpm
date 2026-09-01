@@ -25,6 +25,7 @@ struct RootView: View {
                 case .schedule:
                     ScheduleSetupView(
                         friends: store.friends,
+                        baseAirport: store.profile?.base ?? "",
                         initialEntries: store.mySchedule,
                         initialYear: store.scheduleYear,
                         initialMonth: store.scheduleMonth,

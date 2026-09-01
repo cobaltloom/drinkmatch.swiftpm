@@ -10,6 +10,7 @@ import SwiftUI
 /// see BoardCalendar's header comment for why the two are kept separate.
 struct ScheduleSetupView: View {
     var friends: [Person]
+    var baseAirport: String
     var initialEntries: [StayEntry]
     var initialYear: Int
     var initialMonth: Int
@@ -25,6 +26,7 @@ struct ScheduleSetupView: View {
 
     init(
         friends: [Person],
+        baseAirport: String,
         initialEntries: [StayEntry],
         initialYear: Int,
         initialMonth: Int,
@@ -33,6 +35,7 @@ struct ScheduleSetupView: View {
         onCancel: @escaping () -> Void
     ) {
         self.friends = friends
+        self.baseAirport = baseAirport
         self.initialEntries = initialEntries
         self.initialYear = initialYear
         self.initialMonth = initialMonth
@@ -93,7 +96,7 @@ struct ScheduleSetupView: View {
                         .foregroundStyle(Theme.faint)
                         .padding(.bottom, 8)
                     ForEach($entries) { $entry in
-                        StayEntryEditorView(entry: $entry, friends: friends, month: month, onRemove: { toggleDay(entry.day) })
+                        StayEntryEditorView(entry: $entry, friends: friends, month: month, baseAirport: baseAirport, onRemove: { toggleDay(entry.day) })
                     }
                 }
                 .padding(.bottom, 14)
