@@ -4,10 +4,11 @@ import SwiftUI
 /// shows which email address the user is signed in with, and lets them
 /// change their name (unrestricted — see DrinkMatchStore.updateFullName)
 /// and role/base (rate-limited server-side, see
-/// DrinkMatchStore.updateIdentity). The airline field is read-only here —
-/// editing it was hidden to avoid inviting users to type in a company
-/// name at all; it can still be set via AirlineRequiredGateView if the
-/// (currently disabled) stranger-matching feature is ever turned back on.
+/// DrinkMatchStore.updateIdentity). The airline field is neither shown nor
+/// editable here — surfacing it was dropped entirely to avoid inviting
+/// users to have a company name on file at all; it can still be set via
+/// AirlineRequiredGateView if the (currently disabled) stranger-matching
+/// feature is ever turned back on.
 struct ProfileInfoView: View {
     var store: DrinkMatchStore
 
@@ -246,7 +247,6 @@ struct ProfileInfoView: View {
                     .foregroundStyle(Theme.faint)
             } else {
                 infoRow(label: "職種", value: Roles.label(for: store.profile?.role ?? ""))
-                infoRow(label: "会社", value: (store.profile?.airline).flatMap { $0.isEmpty ? nil : airlineLabel($0) } ?? "未登録")
                 infoRow(label: "拠点空港", value: (store.profile?.base).flatMap { $0.isEmpty ? nil : airportLabel($0) } ?? "未登録")
 
                 if canEditIdentity {
