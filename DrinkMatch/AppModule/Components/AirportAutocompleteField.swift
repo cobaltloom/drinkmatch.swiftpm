@@ -70,6 +70,12 @@ struct AirportAutocompleteField: View {
             }
         }
         .onAppear { query = label(for: code) }
+        // `code` can also change from outside this view (e.g. the schedule
+        // editor auto-filling the stay location when "一日中OK" is turned
+        // on) — without this, `query` (what's actually shown in the text
+        // field) would silently drift from `code` until the user typed
+        // something themselves.
+        .onChange(of: code) { _, newCode in query = label(for: newCode) }
     }
 
     private func suggestionRow(code airportCode: String, label: String, subtitle: String?) -> some View {
