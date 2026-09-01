@@ -3,8 +3,11 @@ import SwiftUI
 /// Account/profile summary, reachable from MainView's overflow menu —
 /// shows which email address the user is signed in with, and lets them
 /// change their name (unrestricted — see DrinkMatchStore.updateFullName)
-/// and role/airline/base (rate-limited server-side, see
-/// DrinkMatchStore.updateIdentity).
+/// and role/base (rate-limited server-side, see
+/// DrinkMatchStore.updateIdentity). The airline field is read-only here —
+/// editing it was hidden to avoid inviting users to type in a company
+/// name at all; it can still be set via AirlineRequiredGateView if the
+/// (currently disabled) stranger-matching feature is ever turned back on.
 struct ProfileInfoView: View {
     var store: DrinkMatchStore
 
@@ -221,9 +224,6 @@ struct ProfileInfoView: View {
                     }
                 }
 
-                Text("会社").font(.system(size: 11)).foregroundStyle(Theme.muted).padding(.top, 8)
-                AirlineAutocompleteField(code: $editAirline)
-
                 Text("拠点空港").font(.system(size: 11)).foregroundStyle(Theme.muted).padding(.top, 8)
                 AirportAutocompleteField(code: $editBase)
 
@@ -241,7 +241,7 @@ struct ProfileInfoView: View {
                     Text(editMessage).font(.system(size: 12)).foregroundStyle(Theme.red)
                 }
 
-                Text("職種・会社・拠点空港は30日に1回まで変更できます。")
+                Text("職種・拠点空港は30日に1回まで変更できます。")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.faint)
             } else {
