@@ -73,6 +73,18 @@ func laterTime(_ first: String, _ second: String) -> String {
     first > second ? first : second
 }
 
+/// The earlier (i.e. more restrictive / safer) of two optional "available
+/// until" cutoffs — nil means no known cutoff on that side, so it never
+/// wins over an actual time.
+func earlierTime(_ first: String?, _ second: String?) -> String? {
+    switch (first, second) {
+    case let (f?, s?): return f < s ? f : s
+    case let (f?, nil): return f
+    case let (nil, s?): return s
+    case (nil, nil): return nil
+    }
+}
+
 // MARK: - "HH:mm" <-> Date, for binding a DatePicker to a stored time string.
 
 func timeString(from date: Date) -> String {

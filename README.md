@@ -44,6 +44,32 @@ commission at no extra cost to the buyer; no Apple cut either, since it
 never touches IAP. The tracking ID embedded in the URL is meant to be
 public — it's what makes the link work — not a secret to protect.
 
+## Overnight stays spanning into the next day
+
+`StayEntry.until` is an optional cutoff time on the day *after* `entry.day`
+— for a stay like "land at 21:00 tonight, leave by 17:00 tomorrow" without
+needing a second calendar day's entry for the same stay. Set via
+`StayEntryEditorView`'s "翌日も空いている" toggle (mirrors the existing "一日中OK"
+toggle's checkbox-then-reveal pattern), which shows a second
+`HourMinuteMenuPicker` defaulting to 17:00. nil (the default, and the only
+option before this) keeps the old one-day-only behavior.
+
+Matching picks this up automatically: drinkmatch-backend's
+`_schedule_overlap()`/`get_match_overlap()` were extended so a spanning
+entry counts as covering both calendar days it touches, and
+`PersonCardView`'s overlap line now shows a "21:00〜17:00" range (via the
+new `laterTime`/`earlierTime` pair in `CalendarFormatting.swift`) instead
+of just "21:00以降" when either side has a same-day cutoff. See
+drinkmatch-backend's README ("Overnight stays spanning into the next day")
+for the matching-day-selection logic and the one known gap (push
+notifications for a spanning-only match can lag).
+
+`ScheduleEntryInsert` has a hand-written `encode(to:)` instead of relying
+on synthesized `Encodable` — Swift's synthesis uses `encodeIfPresent` for
+an `Optional` property, which would omit `available_until` from the wire
+entirely when nil instead of sending JSON `null`, silently failing to
+clear a previously-set cutoff on save.
+
 ## Member groups
 
 MainView has a "1対1" / "グループ" switcher (`ContactMode`, independent of
