@@ -55,6 +55,15 @@ struct PersonCardView: View {
         return parts.isEmpty ? nil : parts.joined(separator: " / ")
     }
 
+    /// "21:00以降" normally, or "21:00〜17:00" when either side's stay is
+    /// winding down that day (an overnight entry's next-day cutoff) — see
+    /// StayOverlap.myUntil/otherUntil.
+    private func overlapTimeRangeLabel(_ overlap: StayOverlap) -> String {
+        let from = laterTime(overlap.myFrom, overlap.otherFrom)
+        guard let until = earlierTime(overlap.myUntil, overlap.otherUntil) else { return "\(from)以降" }
+        return "\(from)〜\(until)"
+    }
+
     init(person: Person, overlap: [StayOverlap], offerStatus: OfferStatus?, offerID: UUID? = nil, showFullName: Bool,
          showBase: Bool,
          showAffiliation: Bool = true,
@@ -118,7 +127,7 @@ struct PersonCardView: View {
                         HStack {
                             HStack(alignment: .firstTextBaseline, spacing: 0) {
                                 Text(dateLabel(overlapDay.day)).font(.system(size: 12)).foregroundStyle(Theme.amber)
-                                Text(" \(airportLabel(overlapDay.location)) — \(laterTime(overlapDay.myFrom, overlapDay.otherFrom))以降どちらも動けます")
+                                Text(" \(airportLabel(overlapDay.location)) — \(overlapTimeRangeLabel(overlapDay))どちらも動けます")
                                     .font(.system(size: 12)).foregroundStyle(Theme.text)
                             }
                             Spacer()

@@ -1,9 +1,11 @@
 import SwiftUI
 
 /// One row in the schedule editor: a selected off-day with its stay airport,
-/// the time the user is free from, a per-day opt-in for stranger visibility
-/// (off by default — see StayEntry.visibleToStrangers), and a per-day
-/// hide-from-specific-friends toggle.
+/// the time the user is free from, an optional next-day cutoff for an
+/// overnight stay (StayEntry.until — e.g. land at 21:00, leave the next day
+/// by 17:00, without needing a second day's entry), a per-day opt-in for
+/// stranger visibility (off by default — see StayEntry.visibleToStrangers),
+/// and a per-day hide-from-specific-friends toggle.
 struct StayEntryEditorView: View {
     @Binding var entry: StayEntry
     var friends: [Person]
@@ -26,6 +28,13 @@ struct StayEntryEditorView: View {
 
     private var timeBinding: Binding<Date> {
         Binding(get: { date(fromTimeString: entry.from) }, set: { entry.from = timeString(from: $0) })
+    }
+
+    /// nil when "翌日も空いている" is off — `entry.until` itself stays nil in
+    /// that case too, so there's nothing to bind a picker to.
+    private var untilTimeBinding: Binding<Date>? {
+        guard let until = entry.until else { return nil }
+        return Binding(get: { date(fromTimeString: until) }, set: { entry.until = timeString(from: $0) })
     }
 
     var body: some View {
@@ -67,6 +76,26 @@ struct StayEntryEditorView: View {
                 .foregroundStyle(isAllDay ? Theme.amber : Theme.muted)
             }
             .buttonStyle(.plain)
+
+            Button {
+                toggleUntilNextDay()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: entry.until != nil ? "checkmark.square.fill" : "square")
+                    Text("翌日も空いている")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(entry.until != nil ? Theme.amber : Theme.muted)
+            }
+            .buttonStyle(.plain)
+
+            if let untilTimeBinding {
+                HStack(spacing: 4) {
+                    Text("翌日").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                    HourMinuteMenuPicker(time: untilTimeBinding)
+                    Text("まで").font(.system(size: 11)).foregroundStyle(Theme.muted)
+                }
+            }
 
             if strangerMatchingFeatureEnabled {
                 Button {
@@ -129,6 +158,10 @@ struct StayEntryEditorView: View {
                 entry.location = baseAirport
             }
         }
+    }
+
+    private func toggleUntilNextDay() {
+        entry.until = entry.until == nil ? "17:00" : nil
     }
 
     private func toggleHidden(_ friendID: UUID) {

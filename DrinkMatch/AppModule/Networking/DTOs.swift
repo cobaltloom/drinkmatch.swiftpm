@@ -273,18 +273,23 @@ struct ScheduleEntryRow: Decodable {
     var day: String
     var airportCode: String
     var availableFrom: String
+    var availableUntil: String?
     var visibleToStrangers: Bool
 
     enum CodingKeys: String, CodingKey {
         case id, day
         case airportCode = "airport_code"
         case availableFrom = "available_from"
+        case availableUntil = "available_until"
         case visibleToStrangers = "visible_to_strangers"
     }
 
     var asStayEntry: StayEntry? {
         guard let dayOfMonth = dayOfMonth(fromPostgresDate: day) else { return nil }
-        return StayEntry(day: dayOfMonth, location: airportCode, from: clientTimeString(fromPostgresTime: availableFrom), visibleToStrangers: visibleToStrangers)
+        return StayEntry(
+            day: dayOfMonth, location: airportCode, from: clientTimeString(fromPostgresTime: availableFrom),
+            until: clientTimeString(fromPostgresTime: availableUntil), visibleToStrangers: visibleToStrangers
+        )
     }
 }
 
@@ -292,13 +297,17 @@ struct MatchOverlapRow: Decodable {
     var day: String
     var airportCode: String
     var myAvailableFrom: String
+    var myAvailableUntil: String?
     var theirAvailableFrom: String
+    var theirAvailableUntil: String?
 
     enum CodingKeys: String, CodingKey {
         case day
         case airportCode = "airport_code"
         case myAvailableFrom = "my_available_from"
+        case myAvailableUntil = "my_available_until"
         case theirAvailableFrom = "their_available_from"
+        case theirAvailableUntil = "their_available_until"
     }
 }
 
@@ -622,13 +631,30 @@ struct ScheduleEntryInsert: Encodable {
     var day: String
     var airportCode: String
     var availableFrom: String
+    var availableUntil: String?
     var visibleToStrangers: Bool
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case day
         case airportCode = "airport_code"
         case availableFrom = "available_from"
+        case availableUntil = "available_until"
         case visibleToStrangers = "visible_to_strangers"
+    }
+
+    // Swift's synthesized Encodable omits an Optional's key entirely when
+    // nil (encodeIfPresent), which would leave a previously-set
+    // available_until untouched by this upsert instead of clearing it when
+    // the user removes the overnight cutoff. Encoding explicitly forces
+    // JSON null onto the wire so PostgREST's UPDATE actually nulls it out.
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(day, forKey: .day)
+        try container.encode(airportCode, forKey: .airportCode)
+        try container.encode(availableFrom, forKey: .availableFrom)
+        try container.encode(availableUntil, forKey: .availableUntil)
+        try container.encode(visibleToStrangers, forKey: .visibleToStrangers)
     }
 }
 

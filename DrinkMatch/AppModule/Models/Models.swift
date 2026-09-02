@@ -27,6 +27,11 @@ struct StayEntry: Identifiable, Hashable {
     var day: Int
     var location: String = ""
     var from: String = "19:00"
+    /// Optional cutoff time on `day + 1`, for a stay that runs overnight
+    /// (e.g. land at 21:00, leave the next day by 17:00) — nil means no
+    /// next-day extension, i.e. this entry only covers `day` itself, same
+    /// as before this field existed.
+    var until: String? = nil
     /// Friend user ids this entry is hidden from (friends-matching privacy only).
     var hiddenFrom: [UUID] = []
     /// Off by default: schedule entries are friends-only unless explicitly
@@ -74,6 +79,11 @@ struct StayOverlap: Identifiable, Hashable {
     var location: String
     var myFrom: String
     var otherFrom: String
+    /// Set only when one side's stay spans into this day from an overnight
+    /// entry made the day before — the time they need to leave by. Nil
+    /// means no known cutoff for that side on this day.
+    var myUntil: String?
+    var otherUntil: String?
     var id: Int { day }
 }
 

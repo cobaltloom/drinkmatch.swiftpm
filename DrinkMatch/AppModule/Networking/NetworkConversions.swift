@@ -38,6 +38,16 @@ func clientTimeString(fromPostgresTime hhmmss: String) -> String {
     String(hhmmss.prefix(5))
 }
 
+/// Optional-friendly counterparts, for the nullable `available_until` /
+/// `until` fields (an overnight stay's next-day cutoff) — nil in, nil out.
+func postgresTimeString(fromClientTime hhmm: String?) -> String? {
+    hhmm.map { postgresTimeString(fromClientTime: $0) }
+}
+
+func clientTimeString(fromPostgresTime hhmmss: String?) -> String? {
+    hhmmss.map { clientTimeString(fromPostgresTime: $0) }
+}
+
 /// Postgres `timestamptz` round-trips as e.g. "2026-08-16T12:34:56.789012+00:00"
 /// — sub-second precision this app never needs, and `ISO8601DateFormatter`
 /// disagrees across platforms on how many fractional digits to accept, so
