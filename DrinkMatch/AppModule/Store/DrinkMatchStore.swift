@@ -513,6 +513,7 @@ final class DrinkMatchStore {
             friends = rows.map(\.asPerson)
             await populateOverlapCache(for: rows.map(\.friendId))
         } catch {
+            print("loadFriends failed: \(error)")
             lastErrorMessage = "知り合いの読み込みに失敗しました。"
         }
     }
