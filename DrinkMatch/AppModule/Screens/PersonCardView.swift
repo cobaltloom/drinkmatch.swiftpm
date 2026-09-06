@@ -17,9 +17,10 @@ struct PersonCardView: View {
     /// where someone is based); friends still see it.
     var showBase: Bool
     /// Stranger search hides the airline too (the user asked strangers not
-    /// see who someone works for); friends still see it. When false, the
-    /// person's initials/nickname take the airline's place as the card's
-    /// bold headline instead of trailing in parentheses.
+    /// see who someone works for); friends still see it. The person's
+    /// name/initials is always the card's bold headline; this only
+    /// controls whether the affiliation (airline/base) trails after it in
+    /// parentheses.
     var showAffiliation: Bool
     var defaultAutoAccept: Bool
     /// The backend pins an offer to one specific day + airport at creation
@@ -108,8 +109,8 @@ struct PersonCardView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 if showAffiliation, let affiliationLine {
-                    Text(affiliationLine).font(.system(size: 14, weight: .bold))
-                    Text("(\(person.displayName(showFullName: showFullName)))")
+                    Text(person.displayName(showFullName: showFullName)).font(.system(size: 14, weight: .bold))
+                    Text("(\(affiliationLine))")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.faint)
                 } else {
